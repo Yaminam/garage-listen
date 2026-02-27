@@ -3,22 +3,35 @@ import { useNavigate } from "react-router";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
-import { Card, CardContent } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
-import { Check, X, CheckCircle, Plus, AlertCircle } from "lucide-react";
+import {
+  Check,
+  X,
+  CheckCircle,
+  Plus,
+  AlertCircle,
+  User,
+  Hash,
+  Trophy,
+  Globe,
+  Target,
+  Plug,
+  PartyPopper,
+  Building2,
+} from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { validateEmail } from "../../lib/validation";
 
 const steps = [
-  "Account Info",
-  "Brand Setup",
-  "Keywords",
-  "Competitors",
-  "Platforms",
-  "Region & Language",
-  "Goals",
-  "Connect Accounts",
-  "Done",
+  { label: "Account Info",      description: "Tell us a bit about you",                   icon: User },
+  { label: "Brand Setup",       description: "Define your brand identity",                 icon: Building2 },
+  { label: "Keywords",          description: "What topics should we monitor?",             icon: Hash },
+  { label: "Competitors",       description: "Who are you competing against?",             icon: Trophy },
+  { label: "Platforms",         description: "Pick your listening channels",               icon: Globe },
+  { label: "Region & Language", description: "Target your audience location",              icon: Globe },
+  { label: "Goals",             description: "What do you want to achieve?",               icon: Target },
+  { label: "Connect Accounts",  description: "Link your social profiles (optional)",       icon: Plug },
+  { label: "Done",              description: "You're all set!",                            icon: PartyPopper },
 ];
 
 const platforms = [
@@ -193,52 +206,103 @@ export function OnboardingPage() {
   }, [currentStep, navigate, completeOnboarding]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-50 py-12 px-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-2xl mb-4 shadow-lg">
-            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-violet-50 flex">
+
+      {/* ── LEFT SIDEBAR ───────────────────────────────────────── */}
+      <aside className="hidden lg:flex flex-col w-72 shrink-0 bg-white border-r border-gray-100 shadow-sm px-6 py-10">
+        {/* Logo */}
+        <div className="flex items-center gap-3 mb-10">
+          <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow">
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
             </svg>
           </div>
-          <h1 className="text-3xl mb-2 text-gray-900">Welcome to Garage Listen</h1>
-          <p className="text-gray-600">Let's set up your social listening workspace</p>
+          <span className="font-bold text-gray-900 text-lg tracking-tight">Garage Listen</span>
         </div>
 
-        {/* Progress Steps */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-2">
-            {steps.map((step, index) => (
-              <div key={step} className="flex-1 flex flex-col items-center">
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-colors ${
-                    index < currentStep
-                      ? "bg-accent border-accent text-white"
-                      : index === currentStep
-                      ? "bg-primary border-primary text-white"
-                      : "bg-white border-gray-300 text-gray-400"
-                  }`}
-                >
-                  {index < currentStep ? <Check className="w-5 h-5" /> : index + 1}
+        {/* Step list */}
+        <nav className="flex flex-col gap-1 flex-1">
+          {steps.map((step, index) => {
+            const Icon = step.icon;
+            const isCompleted = index < currentStep;
+            const isCurrent = index === currentStep;
+            const isFuture = index > currentStep;
+            return (
+              <div key={step.label} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
+                isCurrent ? "bg-primary/10 border border-primary/20" :
+                isCompleted ? "opacity-80" : "opacity-40"
+              }`}>
+                <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-xs font-bold transition-all ${
+                  isCompleted ? "bg-emerald-100 text-emerald-600" :
+                  isCurrent ? "bg-primary text-white shadow-sm shadow-primary/40" :
+                  "bg-gray-100 text-gray-400"
+                }`}>
+                  {isCompleted ? <Check className="w-3.5 h-3.5" /> : <Icon className="w-3.5 h-3.5" />}
                 </div>
-                <span className={`text-xs mt-2 hidden md:block ${index === currentStep ? "text-gray-900" : "text-gray-500"}`}>
-                  {step}
-                </span>
+                <div className="min-w-0">
+                  <p className={`text-sm font-medium truncate ${isCurrent ? "text-primary" : isCompleted ? "text-gray-600" : "text-gray-400"}`}>
+                    {step.label}
+                  </p>
+                </div>
+                {isCurrent && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
               </div>
-            ))}
+            );
+          })}
+        </nav>
+
+        {/* Progress footer */}
+        <div className="mt-8 pt-6 border-t border-gray-100">
+          <div className="flex justify-between text-xs text-gray-500 mb-2">
+            <span>Progress</span>
+            <span className="font-semibold text-primary">{Math.round(((currentStep) / (steps.length - 1)) * 100)}%</span>
           </div>
-          <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
             <div
-              className="absolute h-full bg-primary transition-all duration-300"
-              style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+              className="h-full bg-primary rounded-full transition-all duration-500"
+              style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
             />
           </div>
+          <p className="text-xs text-gray-400 mt-3">Step {currentStep + 1} of {steps.length}</p>
+        </div>
+      </aside>
+
+      {/* ── MAIN CONTENT ───────────────────────────────────────── */}
+      <main className="flex-1 flex flex-col min-h-screen overflow-y-auto">
+        {/* Top bar — mobile only */}
+        <div className="lg:hidden flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-white">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              </svg>
+            </div>
+            <span className="font-bold text-sm text-gray-900">Garage Listen</span>
+          </div>
+          <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">
+            Step {currentStep + 1}/{steps.length}
+          </span>
         </div>
 
-        {/* Step Content */}
-        <Card className="border-0 shadow-2xl">
-          <CardContent className="p-8">
+        {/* Mobile progress bar */}
+        <div className="lg:hidden h-1 bg-gray-100">
+          <div
+            className="h-full bg-primary transition-all duration-500"
+            style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
+          />
+        </div>
+
+        <div className="flex-1 flex flex-col justify-center px-6 py-10 max-w-2xl mx-auto w-full">
+          {/* Step header */}
+          <div className="mb-8">
+            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary text-xs font-semibold px-3 py-1 rounded-full mb-4">
+              {(() => { const Icon = steps[currentStep].icon; return <Icon className="w-3.5 h-3.5" />; })()}
+              Step {currentStep + 1} of {steps.length}
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">{steps[currentStep].label}</h1>
+            <p className="text-gray-500 text-sm">{steps[currentStep].description}</p>
+          </div>
+          {/* Step card */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
             {/* Inline step error banner */}
             {stepError() && (
               <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-2.5 mb-6">
@@ -249,10 +313,6 @@ export function OnboardingPage() {
             {/* Step 1: Account Info */}
             {currentStep === 0 && (
               <div className="space-y-6">
-                <div>
-                  <h2 className="text-2xl mb-2">Create your account</h2>
-                  <p className="text-gray-600">Tell us about yourself</p>
-                </div>
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="fullName">Full Name</Label>
@@ -292,10 +352,6 @@ export function OnboardingPage() {
             {/* Step 2: Brand Setup */}
             {currentStep === 1 && (
               <div className="space-y-6">
-                <div>
-                  <h2 className="text-2xl mb-2">Brand Setup</h2>
-                  <p className="text-gray-600">What's your brand name and what do you do?</p>
-                </div>
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="brandName">Brand Name</Label>
@@ -325,10 +381,6 @@ export function OnboardingPage() {
             {/* Step 3: Keywords */}
             {currentStep === 2 && (
               <div className="space-y-6">
-                <div>
-                  <h2 className="text-2xl mb-2">What do you want to track?</h2>
-                  <p className="text-gray-600">Add keywords, phrases, or hashtags to monitor across all platforms.</p>
-                </div>
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label>Add Keyword or Phrase</Label>
@@ -404,10 +456,6 @@ export function OnboardingPage() {
             {/* Step 4: Competitors */}
             {currentStep === 3 && (
               <div className="space-y-6">
-                <div>
-                  <h2 className="text-2xl mb-2">Add competitors to track</h2>
-                  <p className="text-gray-600">Monitor your competition and compare performance (Optional)</p>
-                </div>
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="competitors">Competitor Name</Label>
@@ -440,10 +488,6 @@ export function OnboardingPage() {
             {/* Step 5: Platforms */}
             {currentStep === 4 && (
               <div className="space-y-6">
-                <div>
-                  <h2 className="text-2xl mb-2">Select platforms to monitor</h2>
-                  <p className="text-gray-600">Choose where you want to listen for mentions</p>
-                </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {platforms.map((platform) => (
                     <button
@@ -466,10 +510,6 @@ export function OnboardingPage() {
             {/* Step 6: Region & Language */}
             {currentStep === 5 && (
               <div className="space-y-6">
-                <div>
-                  <h2 className="text-2xl mb-2">Region & Language</h2>
-                  <p className="text-gray-600">Customize your listening preferences</p>
-                </div>
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="region">Region</Label>
@@ -514,10 +554,6 @@ export function OnboardingPage() {
             {/* Step 7: Goals */}
             {currentStep === 6 && (
               <div className="space-y-6">
-                <div>
-                  <h2 className="text-2xl mb-2">What are your goals?</h2>
-                  <p className="text-gray-600">Select what you want to achieve with social listening</p>
-                </div>
                 <div className="grid md:grid-cols-2 gap-3">
                   {goalOptions.map((goal) => (
                     <button
@@ -540,10 +576,6 @@ export function OnboardingPage() {
             {/* Step 8: Connect Accounts */}
             {currentStep === 7 && (
               <div className="space-y-6">
-                <div>
-                  <h2 className="text-2xl mb-2">Connect your accounts</h2>
-                  <p className="text-gray-600">Optional: Connect social accounts for deeper insights</p>
-                </div>
                 <div className="space-y-3">
                   {platforms.slice(0, 5).map((platform) => (
                     <button
@@ -605,37 +637,37 @@ export function OnboardingPage() {
 
             {/* Navigation */}
             {currentStep < 8 && (
-              <div className="flex justify-between mt-8 pt-6 border-t">
+              <div className="flex justify-between mt-8 pt-6 border-t border-gray-100">
                 <Button
                   variant="outline"
                   onClick={handleBack}
                   disabled={currentStep === 0}
-                  className="h-12 px-8"
+                  className="h-11 px-8 rounded-xl"
                 >
                   Back
                 </Button>
-                <Button 
-                  onClick={handleNext} 
+                <Button
+                  onClick={handleNext}
                   disabled={!canProceed()}
-                  className="h-12 px-8 bg-primary hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="h-11 px-8 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {currentStep === steps.length - 2 ? "Complete Setup" : "Continue"}
+                  {currentStep === steps.length - 2 ? "Complete Setup" : "Continue →"}
                 </Button>
               </div>
             )}
 
             {currentStep === 8 && (
-              <div className="flex justify-center mt-8 pt-6 border-t">
+              <div className="flex justify-center mt-8 pt-6 border-t border-gray-100">
                 <Button
                   onClick={() => { completeOnboarding(); navigate("/dashboard"); }}
-                  className="h-12 px-12 bg-primary hover:bg-primary-600">
-                  Go to Dashboard Now
+                  className="h-11 px-12 rounded-xl bg-primary hover:bg-primary/90">
+                  Go to Dashboard Now →
                 </Button>
               </div>
             )}
-          </CardContent>
-        </Card>
-      </div>
+          </div>{/* end card */}
+        </div>{/* end max-w-2xl */}
+      </main>
     </div>
   );
 }
