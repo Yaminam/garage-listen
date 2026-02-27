@@ -24,6 +24,7 @@ import { AlertsCrisisPage } from "./pages/dashboard/AlertsCrisisPage";
 import { ReportBuilderPage } from "./pages/dashboard/ReportBuilderPage";
 import { SettingsPage } from "./pages/dashboard/SettingsPage";
 import { UnifiedInboxPage } from "./pages/dashboard/UnifiedInboxPage";
+import { AIChatPage } from "./pages/dashboard/AIChatPage";
 
 export const router = createBrowserRouter([
   {
@@ -66,6 +67,7 @@ export const router = createBrowserRouter([
       { path: "alerts", element: <AlertsCrisisPage /> },
       { path: "reports", element: <ReportBuilderPage /> },
       { path: "settings", element: <SettingsPage /> },
+      { path: "ask-ai", element: <AIChatPage /> },
     ],
   },
   {

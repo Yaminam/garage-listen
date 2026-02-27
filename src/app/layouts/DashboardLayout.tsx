@@ -14,6 +14,7 @@ import {
   HelpCircle,
   LogOut,
   Inbox,
+  Bot,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { Toaster } from "../components/ui/sonner";
@@ -42,6 +43,7 @@ const navigation = [
   { name: "Alerts & Crisis", href: "/dashboard/alerts", icon: Bell },
   { name: "Reports", href: "/dashboard/reports", icon: FileText },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
+  { name: "Ask AI", href: "/dashboard/ask-ai", icon: Bot },
 ];
 
 export function DashboardLayout() {
