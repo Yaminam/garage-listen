@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
-import { ArrowUp, ArrowDown, TrendingUp, MessageSquare, Target, Bell } from "lucide-react";
+import { ArrowUp, ArrowDown, TrendingUp, MessageSquare, Target, Bell, Sparkles, X } from "lucide-react";
+import { useState } from "react";
 import {
   LineChart,
   Line,
@@ -116,10 +117,67 @@ const recentMentions = [
   },
 ];
 
+const wordCloudWords = [
+  { word: "#ProductLaunch", size: "text-2xl", color: "text-primary" },
+  { word: "pricing", size: "text-xl", color: "text-error-500" },
+  { word: "CustomerService", size: "text-2xl", color: "text-accent-600" },
+  { word: "innovation", size: "text-lg", color: "text-gray-600" },
+  { word: "AI", size: "text-3xl", color: "text-primary" },
+  { word: "quality", size: "text-xl", color: "text-accent-600" },
+  { word: "competitor", size: "text-base", color: "text-warning-500" },
+  { word: "#SocialListening", size: "text-xl", color: "text-primary" },
+  { word: "feedback", size: "text-lg", color: "text-gray-600" },
+  { word: "support", size: "text-2xl", color: "text-accent-600" },
+  { word: "trust", size: "text-base", color: "text-gray-500" },
+  { word: "brand", size: "text-xl", color: "text-primary" },
+  { word: "crisis", size: "text-sm", color: "text-error-500" },
+  { word: "growth", size: "text-lg", color: "text-accent-600" },
+  { word: "monitoring", size: "text-base", color: "text-gray-600" },
+  { word: "#Analytics", size: "text-lg", color: "text-primary" },
+  { word: "platform", size: "text-sm", color: "text-gray-500" },
+  { word: "strategy", size: "text-sm", color: "text-gray-500" },
+  { word: "engagement", size: "text-xl", color: "text-warning-500" },
+  { word: "sentiment", size: "text-2xl", color: "text-accent-600" },
+];
+
 export function DashboardHome() {
+  const [briefingVisible, setBriefingVisible] = useState(true);
   return (
-    <div className="space-y-8">
-      {/* Header */}
+    <div className="space-y-8">      {/* AI Morning Briefing */}
+      {briefingVisible && (
+        <div className="relative bg-gradient-to-r from-primary to-primary-700 rounded-2xl p-6 text-white shadow-lg overflow-hidden">
+          <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 80% 50%, white 0%, transparent 60%)' }} />
+          <button
+            className="absolute top-4 right-4 text-white/60 hover:text-white transition-colors"
+            onClick={() => setBriefingVisible(false)}
+          >
+            <X className="w-5 h-5" />
+          </button>
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Sparkles className="w-5 h-5 text-white" />
+            </div>
+            <div className="flex-1">
+              <p className="text-white/70 text-sm mb-1">AI Morning Briefing · Feb 27, 2026</p>
+              <h2 className="text-xl font-semibold mb-3">Good morning! Here's your brand snapshot.</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="bg-white/10 rounded-xl p-3">
+                  <p className="text-white/60 text-xs mb-1">🔥 Top Story</p>
+                  <p className="text-sm font-medium">#ProductLaunch is trending — 145% above average mentions today.</p>
+                </div>
+                <div className="bg-white/10 rounded-xl p-3">
+                  <p className="text-white/60 text-xs mb-1">⚠️ Watch Out</p>
+                  <p className="text-sm font-medium">Negative mentions about pricing rose 56% overnight. Review messaging today.</p>
+                </div>
+                <div className="bg-white/10 rounded-xl p-3">
+                  <p className="text-white/60 text-xs mb-1">💡 Opportunity</p>
+                  <p className="text-sm font-medium">Competitor A share of voice dropped 8%. Time to push content on Twitter & LinkedIn.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <div>
         <h1 className="text-3xl text-gray-900 mb-2">Dashboard</h1>
         <p className="text-gray-600">Welcome back! Here's what's happening with your brand today.</p>
@@ -257,6 +315,26 @@ export function DashboardHome() {
                 </div>
               ))}
             </div>
+          </CardContent>
+        </Card>
+        {/* Word Cloud */}
+        <Card className="lg:col-span-2 border-0 shadow-sm">
+          <CardHeader>
+            <CardTitle>Top Keywords</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-x-4 gap-y-3 items-center justify-center min-h-[180px] py-4">
+              {wordCloudWords.map((w, i) => (
+                <span
+                  key={i}
+                  className={`${w.size} ${w.color} font-semibold cursor-default select-none hover:opacity-70 transition-opacity`}
+                  style={{ lineHeight: 1.2 }}
+                >
+                  {w.word}
+                </span>
+              ))}
+            </div>
+            <p className="text-xs text-center text-gray-400 mt-2">Word size = frequency · Last 7 days</p>
           </CardContent>
         </Card>
       </div>

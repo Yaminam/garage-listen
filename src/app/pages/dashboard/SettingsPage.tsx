@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
@@ -16,6 +17,51 @@ const teamMembers = [
 
 export function SettingsPage() {
   const [apiKeyVisible, setApiKeyVisible] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [members, setMembers] = useState(teamMembers);
+  const [newMemberEmail, setNewMemberEmail] = useState("");
+
+  const handleSaveProfile = () => toast.success("Profile saved successfully");
+
+  const handleUpdatePassword = () => {
+    if (!currentPassword) { toast.error("Enter your current password"); return; }
+    if (newPassword.length < 8) { toast.error("New password must be at least 8 characters"); return; }
+    if (newPassword !== confirmPassword) { toast.error("Passwords do not match"); return; }
+    setCurrentPassword(""); setNewPassword(""); setConfirmPassword("");
+    toast.success("Password updated successfully");
+  };
+
+  const handleCopyApiKey = () => {
+    navigator.clipboard.writeText("gl_prod_1234567890abcdef");
+    toast.success("API key copied to clipboard");
+  };
+
+  const handleGenerateKey = () => {
+    const key = "gl_prod_" + Math.random().toString(36).slice(2, 18);
+    navigator.clipboard.writeText(key);
+    toast.success("New API key generated and copied to clipboard");
+  };
+
+  const handleAddMember = () => {
+    if (!newMemberEmail.trim() || !newMemberEmail.includes("@")) { toast.error("Enter a valid email address"); return; }
+    setMembers((prev) => [...prev, { name: newMemberEmail.split("@")[0], email: newMemberEmail, role: "Viewer", status: "Pending" }]);
+    setNewMemberEmail("");
+    toast.success(`Invitation sent to ${newMemberEmail}`);
+  };
+
+  const handleRemoveMember = (email: string) => {
+    setMembers((prev) => prev.filter((m) => m.email !== email));
+    toast.success("Member removed");
+  };
+
+  const handleDownloadInvoice = (date: string) => {
+    toast.promise(
+      new Promise((resolve) => setTimeout(resolve, 800)),
+      { loading: "Preparing invoice...", success: `Invoice for ${date} downloaded`, error: "Download failed" }
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -88,7 +134,7 @@ export function SettingsPage() {
 
               <div className="flex justify-end gap-2 pt-4">
                 <Button variant="outline">Cancel</Button>
-                <Button className="bg-primary">Save Changes</Button>
+                <Button className="bg-primary" onClick={handleSaveProfile}>Save Changes</Button>
               </div>
             </CardContent>
           </Card>
@@ -100,18 +146,18 @@ export function SettingsPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="currentPassword">Current Password</Label>
-                <Input id="currentPassword" type="password" />
+                <Input id="currentPassword" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="newPassword">New Password</Label>
-                <Input id="newPassword" type="password" />
+                <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input id="confirmPassword" type="password" />
+                <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
               </div>
               <div className="flex justify-end">
-                <Button className="bg-primary">Update Password</Button>
+                <Button className="bg-primary" onClick={handleUpdatePassword}>Update Password</Button>
               </div>
             </CardContent>
           </Card>
@@ -123,10 +169,19 @@ export function SettingsPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Team Members</CardTitle>
-                <Button className="gap-2 bg-primary">
-                  <Plus className="w-4 h-4" />
-                  Add Member
-                </Button>
+                <div className="flex gap-2 items-center">
+                  <Input
+                    placeholder="email@company.com"
+                    value={newMemberEmail}
+                    onChange={(e) => setNewMemberEmail(e.target.value)}
+                    className="w-52"
+                    onKeyDown={(e) => e.key === "Enter" && handleAddMember()}
+                  />
+                  <Button className="gap-2 bg-primary" onClick={handleAddMember}>
+                    <Plus className="w-4 h-4" />
+                    Add Member
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -142,12 +197,12 @@ export function SettingsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {teamMembers.map((member, index) => (
+                    {members.map((member, index) => (
                       <tr key={index} className="border-b">
                         <td className="py-4">{member.name}</td>
                         <td className="py-4 text-sm text-gray-600">{member.email}</td>
                         <td className="py-4">
-                          <select className="text-sm border border-gray-200 rounded px-2 py-1">
+                          <select className="text-sm border border-gray-200 rounded px-2 py-1" defaultValue={member.role.toLowerCase()}>
                             <option value="admin">Admin</option>
                             <option value="editor">Editor</option>
                             <option value="viewer">Viewer</option>
@@ -159,7 +214,7 @@ export function SettingsPage() {
                           </Badge>
                         </td>
                         <td className="py-4">
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" onClick={() => handleRemoveMember(member.email)}>
                             <Trash2 className="w-4 h-4 text-error-500" />
                           </Button>
                         </td>
@@ -223,7 +278,7 @@ export function SettingsPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Your API Keys</CardTitle>
-                <Button className="gap-2 bg-primary">
+                <Button className="gap-2 bg-primary" onClick={handleGenerateKey}>
                   <Plus className="w-4 h-4" />
                   Generate Key
                 </Button>
@@ -246,7 +301,7 @@ export function SettingsPage() {
                   >
                     {apiKeyVisible ? "Hide" : "Show"}
                   </Button>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={handleCopyApiKey}>
                     <Copy className="w-4 h-4" />
                   </Button>
                 </div>
@@ -349,7 +404,7 @@ export function SettingsPage() {
                     </div>
                     <div className="flex items-center gap-3">
                       <Badge>{invoice.status}</Badge>
-                      <Button variant="outline" size="sm">Download</Button>
+                      <Button variant="outline" size="sm" onClick={() => handleDownloadInvoice(invoice.date)}>Download</Button>
                     </div>
                   </div>
                 ))}

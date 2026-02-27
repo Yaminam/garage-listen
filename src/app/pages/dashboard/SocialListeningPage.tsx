@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
@@ -11,11 +12,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "../../components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../../components/ui/sheet";
 import { SentimentBadge } from "../../components/ui/sentiment-badge";
 import { PlatformTag } from "../../components/ui/platform-tag";
 import { EmotionTag } from "../../components/ui/emotion-tag";
-import { Search, Filter, LayoutGrid, List, Calendar, Globe, Tag, Download, Bell, X } from "lucide-react";
+import { Search, LayoutGrid, List, Globe, Tag, Download, Bell, X, Columns } from "lucide-react";
 
 const mentions = [
   {
@@ -94,8 +102,74 @@ export function SocialListeningPage() {
   const [viewMode, setViewMode] = useState<"card" | "table">("card");
   const [selectedMention, setSelectedMention] = useState<typeof mentions[0] | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+  const [appliedSearch, setAppliedSearch] = useState("");
+  const [selectedPlatform, setSelectedPlatform] = useState("all");
+  const [selectedSentiment, setSelectedSentiment] = useState("all");
   const [dateRange, setDateRange] = useState("7days");
+  const [createAlertOpen, setCreateAlertOpen] = useState(false);
+  const [alertName, setAlertName] = useState("");
+  const [alertKeyword, setAlertKeyword] = useState("");
+  const [columnSelectorOpen, setColumnSelectorOpen] = useState(false);
+  const allColumns = ["Author", "Platform", "Sentiment", "Text", "Likes", "Comments", "Shares", "Reach", "Time", "Location"];
+  const [selectedColumns, setSelectedColumns] = useState<string[]>(allColumns);
+
+  const toggleColumn = (col: string) =>
+    setSelectedColumns((prev) =>
+      prev.includes(col) ? prev.filter((c) => c !== col) : [...prev, col]
+    );
+
+  const insertOperator = (op: string) => {
+    const trimmed = searchQuery.trimEnd();
+    setSearchQuery(trimmed ? `${trimmed} ${op} ` : `${op} `);
+  };
+
+  const filteredMentions = mentions.filter((m) => {
+    const matchSearch = appliedSearch === "" || m.text.toLowerCase().includes(appliedSearch.toLowerCase()) || m.author.toLowerCase().includes(appliedSearch.toLowerCase());
+    const matchPlatform = selectedPlatform === "all" || m.platform === selectedPlatform;
+    const matchSentiment = selectedSentiment === "all" || m.sentiment === selectedSentiment;
+    return matchSearch && matchPlatform && matchSentiment;
+  });
+
+  const handleExport = () => {
+    // uses selectedColumns
+    const colKeys: Record<string, (m: typeof mentions[0]) => string | number> = {
+      Author: (m) => m.author,
+      Platform: (m) => m.platform,
+      Sentiment: (m) => m.sentiment,
+      Text: (m) => `"${m.text.replace(/"/g, '""')}"`,
+      Likes: (m) => m.engagement.likes,
+      Comments: (m) => m.engagement.comments,
+      Shares: (m) => m.engagement.shares,
+      Reach: (m) => m.reach,
+      Time: (m) => m.time,
+      Location: (m) => m.location,
+    };
+    const cols = selectedColumns.filter((c) => colKeys[c]);
+    const csv = [
+      cols,
+      ...filteredMentions.map((m) => cols.map((c) => colKeys[c](m))),
+    ].map((row) => row.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "mentions-export.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+    setColumnSelectorOpen(false);
+    toast.success(`Exported ${filteredMentions.length} mentions (${cols.length} columns) to CSV`);
+  };
+
+  const handleCreateAlert = () => {
+    if (!alertName.trim() || !alertKeyword.trim()) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+    toast.success(`Alert "${alertName}" created for keyword "${alertKeyword}"`);
+    setCreateAlertOpen(false);
+    setAlertName("");
+    setAlertKeyword("");
+  };
 
   return (
     <div className="space-y-6">
@@ -106,11 +180,11 @@ export function SocialListeningPage() {
           <p className="text-gray-600">Monitor mentions and conversations across platforms</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="gap-2">
-            <Download className="w-4 h-4" />
+          <Button variant="outline" className="gap-2" onClick={() => setColumnSelectorOpen(true)}>
+            <Columns className="w-4 h-4" />
             Export
           </Button>
-          <Button variant="outline" className="gap-2">
+          <Button className="gap-2 bg-primary" onClick={() => setCreateAlertOpen(true)}>
             <Bell className="w-4 h-4" />
             Create Alert
           </Button>
@@ -134,12 +208,27 @@ export function SocialListeningPage() {
                 placeholder='e.g., "Garage Listen" OR #ProductLaunch'
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && setAppliedSearch(searchQuery)}
                 className="flex-1"
               />
-              <Button className="bg-primary">
+              <Button className="bg-primary" onClick={() => setAppliedSearch(searchQuery)}>
                 <Search className="w-4 h-4 mr-2" />
                 Search
               </Button>
+            </div>
+            {/* Boolean operator quick-insert buttons */}
+            <div className="flex flex-wrap gap-2 mt-2">
+              <span className="text-xs text-gray-500 self-center">Quick insert:</span>
+              {["AND", "OR", "NOT", '"phrase"', "(", ")", "#hashtag", "@mention"].map((op) => (
+                <button
+                  key={op}
+                  type="button"
+                  onClick={() => insertOperator(op)}
+                  className="text-xs px-2 py-1 bg-gray-100 hover:bg-primary hover:text-white rounded-md border border-gray-200 transition-colors font-mono"
+                >
+                  {op}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -162,7 +251,7 @@ export function SocialListeningPage() {
 
             <div className="space-y-2">
               <Label>Platform</Label>
-              <Select>
+              <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
                 <SelectTrigger>
                   <SelectValue placeholder="All platforms" />
                 </SelectTrigger>
@@ -179,7 +268,7 @@ export function SocialListeningPage() {
 
             <div className="space-y-2">
               <Label>Sentiment</Label>
-              <Select>
+              <Select value={selectedSentiment} onValueChange={setSelectedSentiment}>
                 <SelectTrigger>
                   <SelectValue placeholder="All sentiments" />
                 </SelectTrigger>
@@ -209,17 +298,32 @@ export function SocialListeningPage() {
           </div>
 
           {/* Active Filters */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm text-gray-600">Active filters:</span>
-            <Badge variant="secondary" className="gap-1">
-              Date: Last 7 days
-              <X className="w-3 h-3 cursor-pointer" />
-            </Badge>
-            <Badge variant="secondary" className="gap-1">
-              Keyword: "Garage Listen"
-              <X className="w-3 h-3 cursor-pointer" />
-            </Badge>
-          </div>
+          {(appliedSearch || selectedPlatform !== "all" || selectedSentiment !== "all") && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm text-gray-600">Active filters:</span>
+              {appliedSearch && (
+                <Badge variant="secondary" className="gap-1">
+                  Keyword: "{appliedSearch}"
+                  <X className="w-3 h-3 cursor-pointer" onClick={() => { setAppliedSearch(""); setSearchQuery(""); }} />
+                </Badge>
+              )}
+              {selectedPlatform !== "all" && (
+                <Badge variant="secondary" className="gap-1 capitalize">
+                  Platform: {selectedPlatform}
+                  <X className="w-3 h-3 cursor-pointer" onClick={() => setSelectedPlatform("all")} />
+                </Badge>
+              )}
+              {selectedSentiment !== "all" && (
+                <Badge variant="secondary" className="gap-1 capitalize">
+                  Sentiment: {selectedSentiment}
+                  <X className="w-3 h-3 cursor-pointer" onClick={() => setSelectedSentiment("all")} />
+                </Badge>
+              )}
+              <button className="text-xs text-gray-500 underline hover:text-gray-800" onClick={() => { setAppliedSearch(""); setSearchQuery(""); setSelectedPlatform("all"); setSelectedSentiment("all"); }}>
+                Clear all
+              </button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -230,7 +334,7 @@ export function SocialListeningPage() {
             <div>
               <CardTitle>Mentions Feed</CardTitle>
               <p className="text-sm text-gray-600 mt-1">
-                {mentions.length.toLocaleString()} mentions found
+                {filteredMentions.length.toLocaleString()} mentions found
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -253,8 +357,15 @@ export function SocialListeningPage() {
         </CardHeader>
         <CardContent>
           {viewMode === "card" ? (
+            filteredMentions.length === 0 ? (
+              <div className="text-center py-16">
+                <Search className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-700 mb-1">No mentions found</h3>
+                <p className="text-sm text-gray-500">Try adjusting your search or filters</p>
+              </div>
+            ) : (
             <div className="space-y-4">
-              {mentions.map((mention) => (
+              {filteredMentions.map((mention) => (
                 <div
                   key={mention.id}
                   className="p-4 border border-gray-200 rounded-lg hover:border-primary transition-colors cursor-pointer"
@@ -305,6 +416,7 @@ export function SocialListeningPage() {
                 </div>
               ))}
             </div>
+            )
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -319,7 +431,7 @@ export function SocialListeningPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {mentions.map((mention) => (
+                  {filteredMentions.map((mention) => (
                     <tr
                       key={mention.id}
                       className="border-b hover:bg-gray-50 cursor-pointer"
@@ -465,6 +577,84 @@ export function SocialListeningPage() {
           )}
         </SheetContent>
       </Sheet>
+
+      {/* Create Alert Dialog */}
+      <Dialog open={createAlertOpen} onOpenChange={setCreateAlertOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create Alert</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Alert Name</Label>
+              <Input placeholder="e.g. Brand Mention Alert" value={alertName} onChange={(e) => setAlertName(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Keyword to Monitor</Label>
+              <Input placeholder='e.g. "Garage Listen"' value={alertKeyword} onChange={(e) => setAlertKeyword(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Trigger When</Label>
+              <Select defaultValue="any">
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="any">Any mention</SelectItem>
+                  <SelectItem value="negative">Negative sentiment only</SelectItem>
+                  <SelectItem value="spike">Volume spike (&gt;50% increase)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateAlertOpen(false)}>Cancel</Button>
+            <Button className="bg-primary" onClick={handleCreateAlert}>Create Alert</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Export Column Selector Dialog */}
+      <Dialog open={columnSelectorOpen} onOpenChange={setColumnSelectorOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Columns className="w-5 h-5" />
+              Choose Export Columns
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <p className="text-sm text-gray-500">Select which columns to include in your CSV export.</p>
+            <div className="space-y-2">
+              {allColumns.map((col) => (
+                <label key={col} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedColumns.includes(col)}
+                    onChange={() => toggleColumn(col)}
+                    className="w-4 h-4 rounded border-gray-300 text-primary"
+                  />
+                  <span className="text-sm font-medium">{col}</span>
+                </label>
+              ))}
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button onClick={() => setSelectedColumns(allColumns)} className="text-xs text-primary hover:underline">
+                Select All
+              </button>
+              <span className="text-gray-300">·</span>
+              <button onClick={() => setSelectedColumns([])} className="text-xs text-gray-500 hover:underline">
+                Clear All
+              </button>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setColumnSelectorOpen(false)}>Cancel</Button>
+            <Button className="bg-primary gap-2" onClick={handleExport} disabled={selectedColumns.length === 0}>
+              <Download className="w-4 h-4" />
+              Export {filteredMentions.length} rows
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

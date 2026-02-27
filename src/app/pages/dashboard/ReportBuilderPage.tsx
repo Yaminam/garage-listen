@@ -1,10 +1,30 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { Label } from "../../components/ui/label";
 import { Switch } from "../../components/ui/switch";
 import { Checkbox } from "../../components/ui/checkbox";
-import { Calendar, Download, Mail, FileText } from "lucide-react";
+import { Input } from "../../components/ui/input";
+import { Badge } from "../../components/ui/badge";
+import { Calendar, Download, Mail, FileText, Clock, Trash2 } from "lucide-react";
+
+type Report = {
+  id: number;
+  name: string;
+  date: string;
+  modules: number;
+  platforms: number;
+  format: string;
+  status: "ready" | "generating";
+};
+
+const initialReports: Report[] = [
+  { id: 1, name: "Weekly Brand Report", date: "Feb 26, 2026", modules: 5, platforms: 6, format: "PDF", status: "ready" },
+  { id: 2, name: "Sentiment Deep Dive", date: "Feb 24, 2026", modules: 3, platforms: 4, format: "Excel", status: "ready" },
+  { id: 3, name: "Competitor Overview", date: "Feb 20, 2026", modules: 4, platforms: 5, format: "PPT", status: "ready" },
+  { id: 4, name: "Q1 Executive Summary", date: "Feb 15, 2026", modules: 6, platforms: 6, format: "PDF", status: "ready" },
+];
 
 const reportModules = [
   { id: "overview", name: "Executive Overview", description: "High-level KPIs and summary" },
@@ -22,6 +42,9 @@ export function ReportBuilderPage() {
   const [selectedPlatforms, setSelectedPlatforms] = useState(platforms);
   const [dateRange, setDateRange] = useState("last7days");
   const [scheduleEnabled, setScheduleEnabled] = useState(false);
+  const [recipients, setRecipients] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [reportHistory, setReportHistory] = useState<Report[]>(initialReports);
 
   const toggleModule = (id: string) => {
     setSelectedModules(
@@ -39,6 +62,50 @@ export function ReportBuilderPage() {
     );
   };
 
+  const handleGenerateReport = () => {
+    if (selectedModules.length === 0) { toast.error("Select at least one report module"); return; }
+    if (selectedPlatforms.length === 0) { toast.error("Select at least one platform"); return; }
+    setIsGenerating(true);
+    toast.promise(
+      new Promise((resolve) => setTimeout(resolve, 1800)),
+      {
+        loading: "Generating report...",
+        success: () => {
+          setIsGenerating(false);
+          const newReport: Report = {
+            id: Date.now(),
+            name: `Custom Report — ${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`,
+            date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+            modules: selectedModules.length,
+            platforms: selectedPlatforms.length,
+            format: "PDF",
+            status: "ready",
+          };
+          setReportHistory((prev) => [newReport, ...prev]);
+          return `Report ready — ${selectedModules.length} sections, ${selectedPlatforms.length} platforms`;
+        },
+        error: "Failed to generate report",
+      }
+    );
+    setTimeout(() => setIsGenerating(false), 1800);
+  };
+
+  const handleEmailReport = () => {
+    if (scheduleEnabled && !recipients.trim()) { toast.error("Enter at least one recipient email"); return; }
+    toast.success("Report scheduled for email delivery");
+  };
+
+  const handleExportFormat = (format: string) => {
+    toast.promise(
+      new Promise((resolve) => setTimeout(resolve, 1000)),
+      {
+        loading: `Preparing ${format} export...`,
+        success: `${format} report downloaded`,
+        error: `Failed to export ${format}`,
+      }
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -47,13 +114,13 @@ export function ReportBuilderPage() {
           <p className="text-gray-600">Create custom reports for stakeholders</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2">
-            <FileText className="w-4 h-4" />
-            Templates
+          <Button variant="outline" className="gap-2" onClick={handleEmailReport}>
+            <Mail className="w-4 h-4" />
+            Email Report
           </Button>
-          <Button className="gap-2 bg-primary">
+          <Button className="gap-2 bg-primary" onClick={handleGenerateReport} disabled={isGenerating}>
             <Download className="w-4 h-4" />
-            Generate Report
+            {isGenerating ? "Generating..." : "Generate Report"}
           </Button>
         </div>
       </div>
@@ -163,6 +230,8 @@ export function ReportBuilderPage() {
                     id="recipients"
                     type="text"
                     placeholder="email@company.com, email2@company.com"
+                    value={recipients}
+                    onChange={(e) => setRecipients(e.target.value)}
                     className="w-full h-11 rounded-lg border border-gray-200 px-3"
                   />
                 </div>
@@ -228,9 +297,9 @@ export function ReportBuilderPage() {
               <div className="mt-4 space-y-2">
                 <p className="text-sm text-gray-600">Export Format</p>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="flex-1">PDF</Button>
-                  <Button variant="outline" size="sm" className="flex-1">Excel</Button>
-                  <Button variant="outline" size="sm" className="flex-1">PPT</Button>
+                  <Button variant="outline" size="sm" className="flex-1" onClick={() => handleExportFormat("PDF")}>PDF</Button>
+                  <Button variant="outline" size="sm" className="flex-1" onClick={() => handleExportFormat("Excel")}>Excel</Button>
+                  <Button variant="outline" size="sm" className="flex-1" onClick={() => handleExportFormat("PPT")}>PPT</Button>
                 </div>
               </div>
             </CardContent>
@@ -261,6 +330,93 @@ export function ReportBuilderPage() {
           </Card>
         </div>
       </div>
+
+      {/* Generated Reports History */}
+      <Card className="border-0 shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="w-5 h-5" />
+            Generated Reports History
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          {reportHistory.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+              <FileText className="w-10 h-10 mb-3 opacity-40" />
+              <p className="font-medium">No reports generated yet</p>
+              <p className="text-sm">Generate a report above and it will appear here.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 dark:bg-slate-800">
+                  <tr className="text-left">
+                    <th className="px-6 py-3 text-xs font-medium text-gray-500">Report Name</th>
+                    <th className="px-6 py-3 text-xs font-medium text-gray-500">Date</th>
+                    <th className="px-6 py-3 text-xs font-medium text-gray-500">Sections</th>
+                    <th className="px-6 py-3 text-xs font-medium text-gray-500">Platforms</th>
+                    <th className="px-6 py-3 text-xs font-medium text-gray-500">Format</th>
+                    <th className="px-6 py-3 text-xs font-medium text-gray-500">Status</th>
+                    <th className="px-6 py-3 text-xs font-medium text-gray-500">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y dark:divide-slate-700">
+                  {reportHistory.map((report) => (
+                    <tr key={report.id} className="hover:bg-gray-50 dark:hover:bg-slate-800">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-primary" />
+                          <span className="text-sm font-medium">{report.name}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">{report.date}</td>
+                      <td className="px-6 py-4 text-sm">{report.modules}</td>
+                      <td className="px-6 py-4 text-sm">{report.platforms}</td>
+                      <td className="px-6 py-4">
+                        <Badge variant="outline" className="text-xs">{report.format}</Badge>
+                      </td>
+                      <td className="px-6 py-4">
+                        <Badge className="text-xs bg-accent-100 text-accent-700">
+                          ✓ Ready
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-1 text-xs h-7"
+                            onClick={() => {
+                              toast.promise(
+                                new Promise((r) => setTimeout(r, 600)),
+                                { loading: "Downloading...", success: `${report.name} downloaded`, error: "Failed" }
+                              );
+                            }}
+                          >
+                            <Download className="w-3 h-3" />
+                            Download
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="gap-1 text-xs h-7 text-gray-400 hover:text-error-500"
+                            onClick={() => {
+                              setReportHistory((prev) => prev.filter((r) => r.id !== report.id));
+                              toast.success("Report deleted");
+                            }}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

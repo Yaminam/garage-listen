@@ -350,6 +350,95 @@ export function SentimentAnalyticsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Geo Heatmap — Location Intelligence */}
+      <Card className="border-0 shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            🌍 Geo Sentiment Heatmap
+            <span className="text-sm font-normal text-gray-500 ml-2">Sentiment by region</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Bar-style heatmap */}
+            <div className="space-y-4">
+              {[
+                { region: "North America", flag: "🇺🇸", positive: 74, neutral: 18, negative: 8, mentions: 9840 },
+                { region: "Europe", flag: "🇪🇺", positive: 68, neutral: 22, negative: 10, mentions: 6230 },
+                { region: "Asia Pacific", flag: "🌏", positive: 79, neutral: 16, negative: 5, mentions: 5820 },
+                { region: "Oceania", flag: "🇦🇺", positive: 82, neutral: 13, negative: 5, mentions: 1240 },
+                { region: "South America", flag: "🌎", positive: 71, neutral: 20, negative: 9, mentions: 1453 },
+              ].map((r) => (
+                <div key={r.region} className="space-y-1">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium flex items-center gap-2">
+                      <span className="text-lg">{r.flag}</span>
+                      {r.region}
+                    </span>
+                    <span className="text-gray-500 text-xs">{r.mentions.toLocaleString()} mentions</span>
+                  </div>
+                  <div className="flex h-3 rounded-full overflow-hidden gap-0.5">
+                    <div
+                      className="bg-accent-500 rounded-l-full transition-all"
+                      style={{ width: `${r.positive}%` }}
+                      title={`Positive: ${r.positive}%`}
+                    />
+                    <div
+                      className="bg-gray-300 transition-all"
+                      style={{ width: `${r.neutral}%` }}
+                      title={`Neutral: ${r.neutral}%`}
+                    />
+                    <div
+                      className="bg-error-400 rounded-r-full transition-all"
+                      style={{ width: `${r.negative}%` }}
+                      title={`Negative: ${r.negative}%`}
+                    />
+                  </div>
+                  <div className="flex gap-4 text-xs text-gray-500">
+                    <span className="text-accent-600">{r.positive}% positive</span>
+                    <span>{r.neutral}% neutral</span>
+                    <span className="text-error-500">{r.negative}% negative</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* City-level breakdown */}
+            <div>
+              <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Top Cities by Mention Volume</h4>
+              <div className="space-y-3">
+                {[
+                  { city: "San Francisco, CA", mentions: 3240, sentiment: "positive", pct: 90 },
+                  { city: "New York, NY", mentions: 2890, sentiment: "positive", pct: 80 },
+                  { city: "London, UK", mentions: 2340, sentiment: "neutral", pct: 65 },
+                  { city: "Toronto, CA", mentions: 1890, sentiment: "positive", pct: 53 },
+                  { city: "Berlin, DE", mentions: 1450, sentiment: "neutral", pct: 40 },
+                  { city: "Sydney, AU", mentions: 1240, sentiment: "positive", pct: 35 },
+                ].map((c, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <span className="w-6 text-xs text-gray-400">{i + 1}.</span>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-0.5">
+                        <span className="text-sm font-medium">{c.city}</span>
+                        <span className="text-xs text-gray-500">{c.mentions.toLocaleString()}</span>
+                      </div>
+                      <div className="h-1.5 bg-gray-100 rounded-full">
+                        <div
+                          className={`h-1.5 rounded-full ${
+                            c.sentiment === "positive" ? "bg-accent-500" : "bg-gray-400"
+                          }`}
+                          style={{ width: `${c.pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

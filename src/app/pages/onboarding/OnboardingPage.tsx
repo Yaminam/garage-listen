@@ -5,11 +5,12 @@ import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Card, CardContent } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
-import { Check, X, CheckCircle } from "lucide-react";
+import { Check, X, CheckCircle, Plus } from "lucide-react";
 
 const steps = [
   "Account Info",
   "Brand Setup",
+  "Keywords",
   "Competitors",
   "Platforms",
   "Region & Language",
@@ -52,7 +53,19 @@ export function OnboardingPage() {
   const [brandName, setBrandName] = useState("");
   const [brandDescription, setBrandDescription] = useState("");
 
-  // Step 3: Competitors
+  // Step 4: Keywords
+  const [keywords, setKeywords] = useState<string[]>(["brand name"]);
+  const [keywordInput, setKeywordInput] = useState("");
+  const [keywordOperator, setKeywordOperator] = useState<"AND" | "OR" | "NOT">("OR");
+
+  const addKeyword = () => {
+    const trimmed = keywordInput.trim();
+    if (trimmed && !keywords.includes(trimmed)) {
+      setKeywords([...keywords, trimmed]);
+      setKeywordInput("");
+    }
+  };
+  const removeKeyword = (kw: string) => setKeywords(keywords.filter((k) => k !== kw));
   const [competitors, setCompetitors] = useState<string[]>([]);
   const [competitorInput, setCompetitorInput] = useState("");
 
@@ -107,20 +120,22 @@ export function OnboardingPage() {
   const canProceed = () => {
     switch (currentStep) {
       case 0: // Account Info
-        return fullName.trim() && email.trim() && company.trim();
+        return !!(fullName.trim() && email.trim() && company.trim());
       case 1: // Brand Setup
-        return brandName.trim();
-      case 2: // Competitors
+        return !!brandName.trim();
+      case 2: // Keywords
         return true; // Optional
-      case 3: // Platforms
+      case 3: // Competitors
+        return true; // Optional
+      case 4: // Platforms
         return selectedPlatforms.length > 0;
-      case 4: // Region & Language
+      case 5: // Region & Language
         return true;
-      case 5: // Goals
+      case 6: // Goals
         return selectedGoals.length > 0;
-      case 6: // Connect Accounts
+      case 7: // Connect Accounts
         return true; // Optional
-      case 7: // Done
+      case 8: // Done
         return true;
       default:
         return true;
@@ -141,13 +156,23 @@ export function OnboardingPage() {
     }
   };
 
-  // Auto-redirect after 3 seconds on Done step
+  const [countdown, setCountdown] = useState(3);
+
+  // Auto-redirect with countdown on Done step
   useEffect(() => {
-    if (currentStep === 7) {
-      const timer = setTimeout(() => {
-        navigate("/dashboard");
-      }, 3000);
-      return () => clearTimeout(timer);
+    if (currentStep === 8) {
+      setCountdown(3);
+      const interval = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            navigate("/dashboard");
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
     }
   }, [currentStep, navigate]);
 
@@ -274,8 +299,87 @@ export function OnboardingPage() {
               </div>
             )}
 
-            {/* Step 3: Competitors */}
+            {/* Step 3: Keywords */}
             {currentStep === 2 && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-2xl mb-2">What do you want to track?</h2>
+                  <p className="text-gray-600">Add keywords, phrases, or hashtags to monitor across all platforms.</p>
+                </div>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Add Keyword or Phrase</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        value={keywordInput}
+                        onChange={(e) => setKeywordInput(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && addKeyword()}
+                        placeholder='e.g. "Garage Listen" or #brandname'
+                        className="h-12 flex-1"
+                      />
+                      <Button onClick={addKeyword} className="h-12 px-6">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add
+                      </Button>
+                    </div>
+                  </div>
+                  {/* Operator selector */}
+                  <div className="space-y-2">
+                    <Label>Match Operator</Label>
+                    <div className="flex gap-2">
+                      {(["OR", "AND", "NOT"] as const).map((op) => (
+                        <button
+                          key={op}
+                          type="button"
+                          onClick={() => setKeywordOperator(op)}
+                          className={`px-4 py-2 rounded-lg border-2 text-sm font-mono font-semibold transition-colors ${
+                            keywordOperator === op
+                              ? "border-primary bg-primary text-white"
+                              : "border-gray-200 hover:border-gray-300 text-gray-600"
+                          }`}
+                        >
+                          {op}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      {keywordOperator === "OR" && "Show results matching any of the keywords (broader results)"}
+                      {keywordOperator === "AND" && "Show results that match ALL keywords simultaneously (narrower results)"}
+                      {keywordOperator === "NOT" && "Exclude results containing the additional keywords"}
+                    </p>
+                  </div>
+                  {/* Keywords list */}
+                  {keywords.length > 0 && (
+                    <div className="space-y-2">
+                      <Label>Your Keywords</Label>
+                      <div className="p-3 border rounded-lg bg-gray-50">
+                        <div className="flex flex-wrap gap-2">
+                          {keywords.map((kw, i) => (
+                            <span key={kw} className="flex items-center">
+                              {i > 0 && (
+                                <span className="text-xs font-mono font-bold text-primary mr-2">{keywordOperator}</span>
+                              )}
+                              <Badge variant="secondary" className="px-3 py-1.5">
+                                {kw}
+                                <button onClick={() => removeKeyword(kw)} className="ml-2">
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </Badge>
+                            </span>
+                          ))}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2">
+                          Query: <code className="text-primary">{keywords.join(` ${keywordOperator} `)}</code>
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Step 4: Competitors */}
+            {currentStep === 3 && (
               <div className="space-y-6">
                 <div>
                   <h2 className="text-2xl mb-2">Add competitors to track</h2>
@@ -310,8 +414,8 @@ export function OnboardingPage() {
               </div>
             )}
 
-            {/* Step 4: Platforms */}
-            {currentStep === 3 && (
+            {/* Step 5: Platforms */}
+            {currentStep === 4 && (
               <div className="space-y-6">
                 <div>
                   <h2 className="text-2xl mb-2">Select platforms to monitor</h2>
@@ -336,8 +440,8 @@ export function OnboardingPage() {
               </div>
             )}
 
-            {/* Step 5: Region & Language */}
-            {currentStep === 4 && (
+            {/* Step 6: Region & Language */}
+            {currentStep === 5 && (
               <div className="space-y-6">
                 <div>
                   <h2 className="text-2xl mb-2">Region & Language</h2>
@@ -384,8 +488,8 @@ export function OnboardingPage() {
               </div>
             )}
 
-            {/* Step 6: Goals */}
-            {currentStep === 5 && (
+            {/* Step 7: Goals */}
+            {currentStep === 6 && (
               <div className="space-y-6">
                 <div>
                   <h2 className="text-2xl mb-2">What are your goals?</h2>
@@ -410,8 +514,8 @@ export function OnboardingPage() {
               </div>
             )}
 
-            {/* Step 7: Connect Accounts */}
-            {currentStep === 6 && (
+            {/* Step 8: Connect Accounts */}
+            {currentStep === 7 && (
               <div className="space-y-6">
                 <div>
                   <h2 className="text-2xl mb-2">Connect your accounts</h2>
@@ -445,7 +549,7 @@ export function OnboardingPage() {
             )}
 
             {/* Step 9: Done */}
-            {currentStep === 7 && (
+            {currentStep === 8 && (
               <div className="space-y-6 text-center py-8">
                 <div className="flex justify-center">
                   <div className="w-20 h-20 bg-accent rounded-full flex items-center justify-center animate-pulse">
@@ -462,16 +566,22 @@ export function OnboardingPage() {
                   <h3 className="font-semibold text-primary mb-3">Your Setup Summary:</h3>
                   <div className="space-y-2 text-sm">
                     <p><span className="font-medium">Brand:</span> {brandName}</p>
+                    <p><span className="font-medium">Keywords:</span> {keywords.join(` ${keywordOperator} `)}</p>
                     <p><span className="font-medium">Platforms:</span> {selectedPlatforms.length} selected</p>
                     <p><span className="font-medium">Region:</span> {region}</p>
                   </div>
                 </div>
-                <p className="text-gray-500 text-sm">Redirecting to dashboard in 3 seconds...</p>
+                <div className="flex flex-col items-center gap-2">
+                  <p className="text-gray-500 text-sm">Redirecting to dashboard in...</p>
+                  <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center shadow-lg">
+                    <span className="text-white text-2xl font-bold">{countdown}</span>
+                  </div>
+                </div>
               </div>
             )}
 
             {/* Navigation */}
-            {currentStep < 7 && (
+            {currentStep < 8 && (
               <div className="flex justify-between mt-8 pt-6 border-t">
                 <Button
                   variant="outline"
@@ -491,7 +601,7 @@ export function OnboardingPage() {
               </div>
             )}
 
-            {currentStep === 7 && (
+            {currentStep === 8 && (
               <div className="flex justify-center mt-8 pt-6 border-t">
                 <Button 
                   onClick={() => navigate("/dashboard")}

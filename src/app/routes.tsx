@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from "react-router";
 import { AuthLayout } from "./layouts/AuthLayout";
 import { DashboardLayout } from "./layouts/DashboardLayout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { NotFoundPage } from "./pages/NotFoundPage";
 
 // Auth pages
 import { LoginPage } from "./pages/auth/LoginPage";
@@ -22,6 +23,7 @@ import { TrendDiscoveryPage } from "./pages/dashboard/TrendDiscoveryPage";
 import { AlertsCrisisPage } from "./pages/dashboard/AlertsCrisisPage";
 import { ReportBuilderPage } from "./pages/dashboard/ReportBuilderPage";
 import { SettingsPage } from "./pages/dashboard/SettingsPage";
+import { UnifiedInboxPage } from "./pages/dashboard/UnifiedInboxPage";
 
 export const router = createBrowserRouter([
   {
@@ -57,6 +59,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <DashboardHome /> },
       { path: "listening", element: <SocialListeningPage /> },
+      { path: "inbox", element: <UnifiedInboxPage /> },
       { path: "sentiment", element: <SentimentAnalyticsPage /> },
       { path: "competitors", element: <CompetitorMonitoringPage /> },
       { path: "trends", element: <TrendDiscoveryPage /> },
@@ -64,5 +67,9 @@ export const router = createBrowserRouter([
       { path: "reports", element: <ReportBuilderPage /> },
       { path: "settings", element: <SettingsPage /> },
     ],
+  },
+  {
+    path: "*",
+    element: <NotFoundPage />,
   },
 ]);

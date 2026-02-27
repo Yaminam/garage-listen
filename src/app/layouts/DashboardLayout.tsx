@@ -13,12 +13,16 @@ import {
   User,
   HelpCircle,
   LogOut,
+  Inbox,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { Toaster } from "../components/ui/sonner";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { useAuth } from "../context/AuthContext";
 import { ThemeToggle } from "../components/ThemeToggle";
+import { NotificationCenter } from "../components/NotificationCenter";
+import { useNotification } from "../context/NotificationContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,6 +35,7 @@ import {
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
   { name: "Social Listening", href: "/dashboard/listening", icon: Ear },
+  { name: "Unified Inbox", href: "/dashboard/inbox", icon: Inbox },
   { name: "Sentiment Analytics", href: "/dashboard/sentiment", icon: TrendingUp },
   { name: "Competitors", href: "/dashboard/competitors", icon: Users },
   { name: "Trends", href: "/dashboard/trends", icon: Sparkles },
@@ -44,6 +49,20 @@ export function DashboardLayout() {
   const navigate = useNavigate();
   const { logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
+  const { notifications } = useNotification();
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false);
+      }
+    }
+    if (notifOpen) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [notifOpen]);
 
   const handleLogout = () => {
     logout();
@@ -51,7 +70,8 @@ export function DashboardLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
+      <Toaster position="top-right" richColors />
       {/* Sidebar for desktop */}
       <aside className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-64 lg:flex-col">
         <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white dark:bg-slate-950 border-r border-gray-200 dark:border-slate-800 px-6 py-4">
@@ -125,10 +145,24 @@ export function DashboardLayout() {
             <div className="flex items-center gap-x-4 lg:gap-x-6">
               <ThemeToggle />
 
-              <button className="relative p-2 text-gray-400 hover:text-gray-600">
-                <Bell className="h-5 w-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-error-500 rounded-full" />
-              </button>
+              <div className="relative" ref={notifRef}>
+                <button
+                  className="relative p-2 text-gray-400 hover:text-gray-600"
+                  onClick={() => setNotifOpen(!notifOpen)}
+                >
+                  <Bell className="h-5 w-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] bg-error-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+                {notifOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-96 z-50 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border dark:border-slate-700 overflow-hidden">
+                    <NotificationCenter />
+                  </div>
+                )}
+              </div>
 
               <button className="p-2 text-gray-400 hover:text-gray-600">
                 <HelpCircle className="h-5 w-5" />

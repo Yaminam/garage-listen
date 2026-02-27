@@ -1,7 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
+import { Button } from "../../components/ui/button";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { TrendingUp, Sparkles } from "lucide-react";
+import { TrendingUp, Sparkles, BarChart2 } from "lucide-react";
+import { useState } from "react";
+import { EmptyState } from "../../components/features/LoadingAndEmpty";
 
 const trendingKeywords = [
   { keyword: "#ProductLaunch", volume: 3240, growth: "+145%", forecast: "+200%" },
@@ -33,11 +36,25 @@ const forecastData = [
 ];
 
 export function TrendDiscoveryPage() {
+  const [showEmpty, setShowEmpty] = useState(false);
+  const displayedKeywords = showEmpty ? [] : trendingKeywords;
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl text-gray-900 mb-2">Trend Discovery</h1>
-        <p className="text-gray-600">Discover emerging trends and forecast future conversations</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl text-gray-900 mb-2">Trend Discovery</h1>
+            <p className="text-gray-600">Discover emerging trends and forecast future conversations</p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowEmpty(!showEmpty)}
+            className="text-xs text-gray-500"
+          >
+            {showEmpty ? "Show Data" : "Preview Empty State"}
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -67,23 +84,32 @@ export function TrendDiscoveryPage() {
           <CardTitle>Rising Keywords</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {trendingKeywords.map((keyword, index) => (
-              <div key={index} className="p-4 bg-gray-50 rounded-lg">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">#{index + 1}</span>
-                    <span className="font-medium text-lg">{keyword.keyword}</span>
+          {displayedKeywords.length === 0 ? (
+            <EmptyState
+              icon={<BarChart2 className="w-12 h-12 text-gray-300" />}
+              title="No trending keywords yet"
+              description="Once your brand starts getting mentioned, rising keywords will appear here."
+              action={{ label: "Go to Social Listening", onClick: () => window.location.href = "/dashboard/listening" }}
+            />
+          ) : (
+            <div className="space-y-4">
+              {displayedKeywords.map((keyword, index) => (
+                <div key={index} className="p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">#{index + 1}</span>
+                      <span className="font-medium text-lg">{keyword.keyword}</span>
+                    </div>
+                    <Badge className="bg-accent text-white">{keyword.growth}</Badge>
                   </div>
-                  <Badge className="bg-accent text-white">{keyword.growth}</Badge>
+                  <div className="flex items-center justify-between text-sm text-gray-600">
+                    <span>{keyword.volume.toLocaleString()} mentions</span>
+                    <span>Forecast: {keyword.forecast}</span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between text-sm text-gray-600">
-                  <span>{keyword.volume.toLocaleString()} mentions</span>
-                  <span>Forecast: {keyword.forecast}</span>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
