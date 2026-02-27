@@ -1,8 +1,19 @@
-import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { createContext, useContext, useState, ReactNode } from 'react';
+
+export interface AuthUser {
+  email: string;
+  firstName: string;
+  lastName: string;
+  company: string;
+}
 
 interface AuthContextType {
   isAuthenticated: boolean;
+  onboardingCompleted: boolean;
+  user: AuthUser | null;
   login: (email: string, password: string) => void;
+  register: (user: AuthUser, password: string) => void;
+  completeOnboarding: () => void;
   logout: () => void;
 }
 
@@ -13,21 +24,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return localStorage.getItem('isAuthenticated') === 'true';
   });
 
+  const [onboardingCompleted, setOnboardingCompleted] = useState(() => {
+    return localStorage.getItem('onboardingCompleted') === 'true';
+  });
+
+  const [user, setUser] = useState<AuthUser | null>(() => {
+    const stored = localStorage.getItem('authUser');
+    return stored ? JSON.parse(stored) : null;
+  });
+
   const login = (email: string, password: string) => {
-    // Simple mock login - in a real app, this would call an API
     if (email && password) {
       setIsAuthenticated(true);
       localStorage.setItem('isAuthenticated', 'true');
+      // Restore user if stored, else create placeholder
+      if (!user) {
+        const u: AuthUser = { email, firstName: 'User', lastName: '', company: '' };
+        setUser(u);
+        localStorage.setItem('authUser', JSON.stringify(u));
+      }
     }
+  };
+
+  const register = (newUser: AuthUser, _password: string) => {
+    setIsAuthenticated(true);
+    setUser(newUser);
+    localStorage.setItem('isAuthenticated', 'true');
+    localStorage.setItem('authUser', JSON.stringify(newUser));
+  };
+
+  const completeOnboarding = () => {
+    setOnboardingCompleted(true);
+    localStorage.setItem('onboardingCompleted', 'true');
   };
 
   const logout = () => {
     setIsAuthenticated(false);
+    setOnboardingCompleted(false);
+    setUser(null);
     localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('onboardingCompleted');
+    localStorage.removeItem('authUser');
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, onboardingCompleted, user, login, register, completeOnboarding, logout }}>
       {children}
     </AuthContext.Provider>
   );

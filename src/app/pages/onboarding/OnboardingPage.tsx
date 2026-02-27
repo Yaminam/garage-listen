@@ -5,7 +5,9 @@ import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Card, CardContent } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
-import { Check, X, CheckCircle, Plus } from "lucide-react";
+import { Check, X, CheckCircle, Plus, AlertCircle } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+import { validateEmail } from "../../lib/validation";
 
 const steps = [
   "Account Info",
@@ -42,7 +44,9 @@ const goalOptions = [
 
 export function OnboardingPage() {
   const navigate = useNavigate();
+  const { completeOnboarding } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
+  const [tried, setTried] = useState(false); // tracks if user tried to advance without meeting requirements
 
   // Step 1: Account Info
   const [fullName, setFullName] = useState("");
@@ -119,41 +123,52 @@ export function OnboardingPage() {
 
   const canProceed = () => {
     switch (currentStep) {
-      case 0: // Account Info
-        return !!(fullName.trim() && email.trim() && company.trim());
-      case 1: // Brand Setup
-        return !!brandName.trim();
-      case 2: // Keywords
-        return true; // Optional
-      case 3: // Competitors
-        return true; // Optional
-      case 4: // Platforms
-        return selectedPlatforms.length > 0;
-      case 5: // Region & Language
-        return true;
-      case 6: // Goals
-        return selectedGoals.length > 0;
-      case 7: // Connect Accounts
-        return true; // Optional
-      case 8: // Done
-        return true;
-      default:
-        return true;
+      case 0: return !!(fullName.trim() && email.trim() && company.trim() && !validateEmail(email));
+      case 1: return !!brandName.trim();
+      case 2: return true;
+      case 3: return true;
+      case 4: return selectedPlatforms.length > 0;
+      case 5: return true;
+      case 6: return selectedGoals.length > 0;
+      case 7: return true;
+      case 8: return true;
+      default: return true;
+    }
+  };
+
+  const stepError = (): string | null => {
+    if (!tried) return null;
+    switch (currentStep) {
+      case 0:
+        if (!fullName.trim()) return "Full name is required";
+        if (!email.trim()) return "Email is required";
+        if (validateEmail(email)) return validateEmail(email);
+        if (!company.trim()) return "Company name is required";
+        return null;
+      case 1: return !brandName.trim() ? "Brand name is required" : null;
+      case 4: return selectedPlatforms.length === 0 ? "Select at least one platform" : null;
+      case 6: return selectedGoals.length === 0 ? "Select at least one goal" : null;
+      default: return null;
     }
   };
 
   const handleNext = () => {
+    if (!canProceed()) {
+      setTried(true);
+      return;
+    }
+    setTried(false);
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
+      completeOnboarding();
       navigate("/dashboard");
     }
   };
 
   const handleBack = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
+    setTried(false);
+    if (currentStep > 0) setCurrentStep(currentStep - 1);
   };
 
   const [countdown, setCountdown] = useState(3);
@@ -161,6 +176,7 @@ export function OnboardingPage() {
   // Auto-redirect with countdown on Done step
   useEffect(() => {
     if (currentStep === 8) {
+      completeOnboarding();
       setCountdown(3);
       const interval = setInterval(() => {
         setCountdown((prev) => {
@@ -174,7 +190,7 @@ export function OnboardingPage() {
       }, 1000);
       return () => clearInterval(interval);
     }
-  }, [currentStep, navigate]);
+  }, [currentStep, navigate, completeOnboarding]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-50 py-12 px-4">
@@ -223,6 +239,13 @@ export function OnboardingPage() {
         {/* Step Content */}
         <Card className="border-0 shadow-2xl">
           <CardContent className="p-8">
+            {/* Inline step error banner */}
+            {stepError() && (
+              <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-2.5 mb-6">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                {stepError()}
+              </div>
+            )}
             {/* Step 1: Account Info */}
             {currentStep === 0 && (
               <div className="space-y-6">
@@ -236,9 +259,9 @@ export function OnboardingPage() {
                     <Input
                       id="fullName"
                       value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
+                      onChange={(e) => { setFullName(e.target.value); setTried(false); }}
                       placeholder="John Doe"
-                      className="h-12"
+                      className={`h-12 ${tried && !fullName.trim() ? "border-red-500" : ""}`}
                     />
                   </div>
                   <div className="space-y-2">
@@ -247,9 +270,9 @@ export function OnboardingPage() {
                       id="email"
                       type="email"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => { setEmail(e.target.value); setTried(false); }}
                       placeholder="john@example.com"
-                      className="h-12"
+                      className={`h-12 ${tried && validateEmail(email) ? "border-red-500" : ""}`}
                     />
                   </div>
                   <div className="space-y-2">
@@ -257,9 +280,9 @@ export function OnboardingPage() {
                     <Input
                       id="company"
                       value={company}
-                      onChange={(e) => setCompany(e.target.value)}
+                      onChange={(e) => { setCompany(e.target.value); setTried(false); }}
                       placeholder="Acme Inc."
-                      className="h-12"
+                      className={`h-12 ${tried && !company.trim() ? "border-red-500" : ""}`}
                     />
                   </div>
                 </div>
@@ -603,10 +626,9 @@ export function OnboardingPage() {
 
             {currentStep === 8 && (
               <div className="flex justify-center mt-8 pt-6 border-t">
-                <Button 
-                  onClick={() => navigate("/dashboard")}
-                  className="h-12 px-12 bg-primary hover:bg-primary-600"
-                >
+                <Button
+                  onClick={() => { completeOnboarding(); navigate("/dashboard"); }}
+                  className="h-12 px-12 bg-primary hover:bg-primary-600">
                   Go to Dashboard Now
                 </Button>
               </div>
