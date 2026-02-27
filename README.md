@@ -1,4 +1,4 @@
-# Garage Listen - Social Media Monitoring & Sentiment Analysis Platform
+﻿# Garage Listen - Social Media Monitoring & Sentiment Analysis Platform
 
 A comprehensive SaaS application for monitoring social media mentions, analyzing sentiment, tracking competitors, discovering trends, and managing real-time alerts. Built with React, TypeScript, Tailwind CSS, and modern web technologies.
 
@@ -71,7 +71,7 @@ A comprehensive SaaS application for monitoring social media mentions, analyzing
 - **Analyst**: Report access (view analytics, create reports, export data)
 - **Viewer**: Read-only access (view analytics only)
 
-## ✨ New Premium Features (Top 5)
+## âœ¨ New Premium Features (Top 5)
 
 ### 9. **Mentions Feed + Detail Drawer**
 - Real-time mention feed with author avatars and verified badges
@@ -120,21 +120,21 @@ A comprehensive SaaS application for monitoring social media mentions, analyzing
 
 ```
 src/
-├── app/
-│   ├── components/
-│   │   ├── figma/          # Figma design components
-│   │   └── ui/             # Reusable UI components (Radix UI based)
-│   ├── context/            # Context providers (Auth, Theme, Notifications, SavedSearch)
-│   ├── layouts/            # Page layouts (Auth, Dashboard)
-│   ├── pages/              # Application pages
-│   │   ├── auth/           # Login, Signup, Password reset
-│   │   ├── dashboard/      # Dashboard pages
-│   │   └── onboarding/     # Onboarding flow
-│   ├── utils/              # Utility functions and helpers
-│   ├── App.tsx             # Root component with provider setup
-│   └── routes.tsx          # Route configuration
-├── styles/                 # Global styles and theme
-└── main.tsx                # Application entry point
+â”œâ”€â”€ app/
+â”‚   â”œâ”€â”€ components/
+â”‚   â”‚   â”œâ”€â”€ figma/          # Figma design components
+â”‚   â”‚   â””â”€â”€ ui/             # Reusable UI components (Radix UI based)
+â”‚   â”œâ”€â”€ context/            # Context providers (Auth, Theme, Notifications, SavedSearch)
+â”‚   â”œâ”€â”€ layouts/            # Page layouts (Auth, Dashboard)
+â”‚   â”œâ”€â”€ pages/              # Application pages
+â”‚   â”‚   â”œâ”€â”€ auth/           # Login, Signup, Password reset
+â”‚   â”‚   â”œâ”€â”€ dashboard/      # Dashboard pages
+â”‚   â”‚   â””â”€â”€ onboarding/     # Onboarding flow
+â”‚   â”œâ”€â”€ utils/              # Utility functions and helpers
+â”‚   â”œâ”€â”€ App.tsx             # Root component with provider setup
+â”‚   â””â”€â”€ routes.tsx          # Route configuration
+â”œâ”€â”€ styles/                 # Global styles and theme
+â””â”€â”€ main.tsx                # Application entry point
 ```
 
 ## Technology Stack
@@ -193,21 +193,21 @@ The application uses multiple Context providers for global state management:
 ## Route Structure
 
 ```
-/                          → Redirects to /auth/login
-/auth/login                → Login page (public)
-/auth/signup               → Signup page (public)
-/auth/forgot-password      → Forgot password (public)
-/auth/reset-password       → Reset password (public)
-/auth/email-verification   → Email verification (public)
-/onboarding                → 8-step onboarding (protected)
-/dashboard                 → Dashboard home (protected)
-/dashboard/listening       → Social Listening (protected)
-/dashboard/sentiment       → Sentiment Analytics (protected)
-/dashboard/competitors     → Competitor Monitoring (protected)
-/dashboard/trends          → Trend Discovery (protected)
-/dashboard/alerts          → Alerts & Crisis (protected)
-/dashboard/reports         → Report Builder (protected)
-/dashboard/settings        → Settings (protected)
+/                          â†’ Redirects to /auth/login
+/auth/login                â†’ Login page (public)
+/auth/signup               â†’ Signup page (public)
+/auth/forgot-password      â†’ Forgot password (public)
+/auth/reset-password       â†’ Reset password (public)
+/auth/email-verification   â†’ Email verification (public)
+/onboarding                â†’ 8-step onboarding (protected)
+/dashboard                 â†’ Dashboard home (protected)
+/dashboard/listening       â†’ Social Listening (protected)
+/dashboard/sentiment       â†’ Sentiment Analytics (protected)
+/dashboard/competitors     â†’ Competitor Monitoring (protected)
+/dashboard/trends          â†’ Trend Discovery (protected)
+/dashboard/alerts          â†’ Alerts & Crisis (protected)
+/dashboard/reports         â†’ Report Builder (protected)
+/dashboard/settings        â†’ Settings (protected)
 ```
 
 ## Getting Started
@@ -236,7 +236,7 @@ npm run preview
 The app runs on `http://localhost:5173` by default (Vite dev server).
 
 ### Default Flow
-1. Access the app → redirected to login
+1. Access the app â†’ redirected to login
 2. Sign up or login with email
 3. Complete 8-step onboarding
 4. Access dashboard and its features
@@ -261,16 +261,16 @@ To switch workspaces in the dashboard:
 
 ```
 User Access
-    ↓
+    â†“
 ProtectedRoute Check
-    ↓
+    â†“
 Is Authenticated? 
-    ├─ No → Redirect to /auth/login
-    └─ Yes → Continue
-        ↓
-    On Login Success → Redirect to /onboarding
-        ↓
-    Complete Onboarding → Redirect to /dashboard
+    â”œâ”€ No â†’ Redirect to /auth/login
+    â””â”€ Yes â†’ Continue
+        â†“
+    On Login Success â†’ Redirect to /onboarding
+        â†“
+    Complete Onboarding â†’ Redirect to /dashboard
 ```
 
 ## Features Integration
@@ -437,7 +437,7 @@ export function MyComponent() {
 ### Animations Not Working
 - Verify custom animations are defined in `src/styles/tailwind.css`
 - Check that animation classes are imported correctly
-- Browser DevTools → Elements → check for `animate-fade-in` etc classes
+- Browser DevTools â†’ Elements â†’ check for `animate-fade-in` etc classes
 - Ensure Tailwind CSS is properly compiled
 
 ### Dev Server Issues
@@ -477,5 +477,5 @@ The app uses:
 - CSS Custom Properties (CSS variables)
 - Tailwind v4 with modern CSS
 - ES2020+ JavaScript features
-  #   g a r a g e - l i s t e n  
+ 
  
