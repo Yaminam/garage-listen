@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { ArrowUp, ArrowDown, TrendingUp, MessageSquare, Target, Bell, Sparkles, X } from "lucide-react";
 import { useState } from "react";
+import { useTheme } from "../../context/ThemeContext";
 import {
   LineChart,
   Line,
@@ -27,7 +28,7 @@ const kpiData = [
     trend: "up",
     icon: MessageSquare,
     color: "text-primary",
-    bgColor: "bg-primary-50",
+    bgColor: "bg-primary-50 dark:bg-primary/20",
   },
   {
     name: "Sentiment Score",
@@ -35,8 +36,8 @@ const kpiData = [
     change: "+5.2%",
     trend: "up",
     icon: TrendingUp,
-    color: "text-accent-600",
-    bgColor: "bg-accent-50",
+    color: "text-accent-600 dark:text-accent-500",
+    bgColor: "bg-accent-50 dark:bg-accent/20",
   },
   {
     name: "Share of Voice",
@@ -45,7 +46,7 @@ const kpiData = [
     trend: "down",
     icon: Target,
     color: "text-warning-500",
-    bgColor: "bg-warning-50",
+    bgColor: "bg-warning-50 dark:bg-warning/20",
   },
   {
     name: "Active Alerts",
@@ -54,7 +55,7 @@ const kpiData = [
     trend: "up",
     icon: Bell,
     color: "text-error-500",
-    bgColor: "bg-error-50",
+    bgColor: "bg-error-50 dark:bg-red-500/20",
   },
 ];
 
@@ -121,27 +122,30 @@ const wordCloudWords = [
   { word: "#ProductLaunch", size: "text-2xl", color: "text-primary" },
   { word: "pricing", size: "text-xl", color: "text-error-500" },
   { word: "CustomerService", size: "text-2xl", color: "text-accent-600" },
-  { word: "innovation", size: "text-lg", color: "text-gray-600" },
+  { word: "innovation", size: "text-lg", color: "text-gray-500 dark:text-slate-400" },
   { word: "AI", size: "text-3xl", color: "text-primary" },
   { word: "quality", size: "text-xl", color: "text-accent-600" },
   { word: "competitor", size: "text-base", color: "text-warning-500" },
   { word: "#SocialListening", size: "text-xl", color: "text-primary" },
-  { word: "feedback", size: "text-lg", color: "text-gray-600" },
+  { word: "feedback", size: "text-lg", color: "text-gray-500 dark:text-slate-400" },
   { word: "support", size: "text-2xl", color: "text-accent-600" },
-  { word: "trust", size: "text-base", color: "text-gray-500" },
+  { word: "trust", size: "text-base", color: "text-gray-400 dark:text-slate-500" },
   { word: "brand", size: "text-xl", color: "text-primary" },
   { word: "crisis", size: "text-sm", color: "text-error-500" },
   { word: "growth", size: "text-lg", color: "text-accent-600" },
-  { word: "monitoring", size: "text-base", color: "text-gray-600" },
+  { word: "monitoring", size: "text-base", color: "text-gray-500 dark:text-slate-400" },
   { word: "#Analytics", size: "text-lg", color: "text-primary" },
-  { word: "platform", size: "text-sm", color: "text-gray-500" },
-  { word: "strategy", size: "text-sm", color: "text-gray-500" },
+  { word: "platform", size: "text-sm", color: "text-gray-400 dark:text-slate-500" },
+  { word: "strategy", size: "text-sm", color: "text-gray-400 dark:text-slate-500" },
   { word: "engagement", size: "text-xl", color: "text-warning-500" },
   { word: "sentiment", size: "text-2xl", color: "text-accent-600" },
 ];
 
 export function DashboardHome() {
   const [briefingVisible, setBriefingVisible] = useState(true);
+  const { theme } = useTheme();
+  const chartGrid = theme === 'dark' ? '#334155' : '#e5e7eb';
+  const chartAxis = theme === 'dark' ? '#94a3b8' : '#6b7280';
   return (
     <div className="space-y-8">      {/* AI Morning Briefing */}
       {briefingVisible && (
@@ -179,8 +183,8 @@ export function DashboardHome() {
         </div>
       )}
       <div>
-        <h1 className="text-3xl text-gray-900 mb-2">Dashboard</h1>
-        <p className="text-gray-600">Welcome back! Here's what's happening with your brand today.</p>
+        <h1 className="text-3xl text-gray-900 dark:text-white mb-2">Dashboard</h1>
+        <p className="text-gray-600 dark:text-slate-400">Welcome back! Here's what's happening with your brand today.</p>
       </div>
 
       {/* KPI Cards */}
@@ -192,8 +196,8 @@ export function DashboardHome() {
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 mb-1">{kpi.name}</p>
-                    <h3 className="text-3xl mb-2">{kpi.value}</h3>
+                    <p className="text-sm text-gray-600 dark:text-slate-400 mb-1">{kpi.name}</p>
+                    <h3 className="text-3xl mb-2 dark:text-white">{kpi.value}</h3>
                     <div className="flex items-center gap-1 text-sm">
                       {kpi.trend === "up" ? (
                         <ArrowUp className="w-4 h-4 text-accent-600" />
@@ -203,7 +207,7 @@ export function DashboardHome() {
                       <span className={kpi.trend === "up" ? "text-accent-600" : "text-error-500"}>
                         {kpi.change}
                       </span>
-                      <span className="text-gray-500 ml-1">vs last week</span>
+                      <span className="text-gray-500 dark:text-slate-500 ml-1">vs last week</span>
                     </div>
                   </div>
                   <div className={`w-12 h-12 ${kpi.bgColor} rounded-xl flex items-center justify-center`}>
@@ -226,9 +230,9 @@ export function DashboardHome() {
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={mentionsData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="date" stroke="#6b7280" />
-                <YAxis stroke="#6b7280" />
+                <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
+                <XAxis dataKey="date" stroke={chartAxis} tick={{ fill: chartAxis }} />
+                <YAxis stroke={chartAxis} tick={{ fill: chartAxis }} />
                 <Tooltip />
                 <Legend />
                 <Line type="monotone" dataKey="mentions" stroke="#6366f1" strokeWidth={2} name="Mentions" />
@@ -277,9 +281,9 @@ export function DashboardHome() {
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={platformData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis type="number" stroke="#6b7280" />
-                <YAxis dataKey="platform" type="category" stroke="#6b7280" />
+                <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
+                <XAxis type="number" stroke={chartAxis} tick={{ fill: chartAxis }} />
+                <YAxis dataKey="platform" type="category" stroke={chartAxis} tick={{ fill: chartAxis }} />
                 <Tooltip />
                 <Bar dataKey="mentions" radius={[0, 8, 8, 0]}>
                   {platformData.map((entry, index) => (
@@ -299,15 +303,15 @@ export function DashboardHome() {
           <CardContent>
             <div className="space-y-4">
               {trendingTopics.map((topic, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="font-medium">{topic.topic}</span>
+                      <span className="font-medium dark:text-white">{topic.topic}</span>
                       <SentimentBadge sentiment={topic.sentiment} size="sm">
                         {topic.sentiment}
                       </SentimentBadge>
                     </div>
-                    <p className="text-sm text-gray-600">{topic.mentions.toLocaleString()} mentions</p>
+                    <p className="text-sm text-gray-600 dark:text-slate-400">{topic.mentions.toLocaleString()} mentions</p>
                   </div>
                   <div className="text-right">
                     <span className="text-accent-600 font-medium">{topic.growth}</span>
@@ -334,7 +338,7 @@ export function DashboardHome() {
                 </span>
               ))}
             </div>
-            <p className="text-xs text-center text-gray-400 mt-2">Word size = frequency · Last 7 days</p>
+            <p className="text-xs text-center text-gray-400 dark:text-slate-500 mt-2">Word size = frequency · Last 7 days</p>
           </CardContent>
         </Card>
       </div>
@@ -349,15 +353,15 @@ export function DashboardHome() {
           <CardContent>
             <div className="space-y-4">
               {recentMentions.map((mention, index) => (
-                <div key={index} className="p-4 border border-gray-200 rounded-lg hover:border-primary transition-colors cursor-pointer">
+                <div key={index} className="p-4 border border-gray-200 dark:border-slate-700 rounded-lg hover:border-primary dark:hover:border-primary transition-colors cursor-pointer">
                   <div className="flex items-start gap-3">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         <PlatformTag platform={mention.platform} />
-                        <span className="font-medium text-sm">{mention.author}</span>
-                        <span className="text-xs text-gray-500">{mention.time}</span>
+                        <span className="font-medium text-sm dark:text-white">{mention.author}</span>
+                        <span className="text-xs text-gray-500 dark:text-slate-500">{mention.time}</span>
                       </div>
-                      <p className="text-sm text-gray-700 mb-2">{mention.text}</p>
+                      <p className="text-sm text-gray-700 dark:text-slate-300 mb-2">{mention.text}</p>
                       <div className="flex items-center gap-3 text-xs text-gray-500">
                         <SentimentBadge sentiment={mention.sentiment} size="sm">
                           {mention.sentiment}
@@ -373,7 +377,7 @@ export function DashboardHome() {
         </Card>
 
         {/* AI Insight Summary */}
-        <Card className="border-0 shadow-sm bg-gradient-to-br from-primary-50 to-accent-50">
+        <Card className="border-0 shadow-sm bg-gradient-to-br from-primary-50 to-accent-50 dark:from-primary/10 dark:to-accent/10">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
@@ -384,21 +388,21 @@ export function DashboardHome() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="p-4 bg-white rounded-lg">
-                <h4 className="font-medium mb-2">🎯 Key Finding</h4>
-                <p className="text-sm text-gray-600">
+              <div className="p-4 bg-white dark:bg-slate-800 rounded-lg">
+                <h4 className="font-medium mb-2 dark:text-white">🎯 Key Finding</h4>
+                <p className="text-sm text-gray-600 dark:text-slate-400">
                   Your #ProductLaunch campaign generated 3.2K mentions today, 145% above average. Sentiment is 85% positive.
                 </p>
               </div>
-              <div className="p-4 bg-white rounded-lg">
-                <h4 className="font-medium mb-2">⚠️ Alert</h4>
-                <p className="text-sm text-gray-600">
+              <div className="p-4 bg-white dark:bg-slate-800 rounded-lg">
+                <h4 className="font-medium mb-2 dark:text-white">⚠️ Alert</h4>
+                <p className="text-sm text-gray-600 dark:text-slate-400">
                   Negative mentions about pricing increased by 56%. Consider addressing customer concerns.
                 </p>
               </div>
-              <div className="p-4 bg-white rounded-lg">
-                <h4 className="font-medium mb-2">💡 Opportunity</h4>
-                <p className="text-sm text-gray-600">
+              <div className="p-4 bg-white dark:bg-slate-800 rounded-lg">
+                <h4 className="font-medium mb-2 dark:text-white">💡 Opportunity</h4>
+                <p className="text-sm text-gray-600 dark:text-slate-400">
                   Your competitor mentions dropped 23%. Great time to increase your share of voice.
                 </p>
               </div>
