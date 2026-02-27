@@ -176,8 +176,8 @@ export function SocialListeningPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl text-gray-900 mb-2">Social Listening</h1>
-          <p className="text-gray-600">Monitor mentions and conversations across platforms</p>
+          <h1 className="text-3xl text-gray-900 dark:text-white mb-2">Social Listening</h1>
+          <p className="text-gray-600 dark:text-slate-400">Monitor mentions and conversations across platforms</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" className="gap-2" onClick={() => setColumnSelectorOpen(true)}>
@@ -224,7 +224,7 @@ export function SocialListeningPage() {
                   key={op}
                   type="button"
                   onClick={() => insertOperator(op)}
-                  className="text-xs px-2 py-1 bg-gray-100 hover:bg-primary hover:text-white rounded-md border border-gray-200 transition-colors font-mono"
+                  className="text-xs px-2 py-1 bg-gray-100 dark:bg-slate-800 hover:bg-primary hover:text-white dark:border-slate-600 dark:text-slate-300 rounded-md border border-gray-200 transition-colors font-mono"
                 >
                   {op}
                 </button>
@@ -300,7 +300,7 @@ export function SocialListeningPage() {
           {/* Active Filters */}
           {(appliedSearch || selectedPlatform !== "all" || selectedSentiment !== "all") && (
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm text-gray-600">Active filters:</span>
+              <span className="text-sm text-gray-600 dark:text-slate-400">Active filters:</span>
               {appliedSearch && (
                 <Badge variant="secondary" className="gap-1">
                   Keyword: "{appliedSearch}"
@@ -319,7 +319,7 @@ export function SocialListeningPage() {
                   <X className="w-3 h-3 cursor-pointer" onClick={() => setSelectedSentiment("all")} />
                 </Badge>
               )}
-              <button className="text-xs text-gray-500 underline hover:text-gray-800" onClick={() => { setAppliedSearch(""); setSearchQuery(""); setSelectedPlatform("all"); setSelectedSentiment("all"); }}>
+              <button className="text-xs text-gray-500 dark:text-slate-400 underline hover:text-gray-800 dark:hover:text-white" onClick={() => { setAppliedSearch(""); setSearchQuery(""); setSelectedPlatform("all"); setSelectedSentiment("all"); }}>
                 Clear all
               </button>
             </div>
@@ -333,7 +333,7 @@ export function SocialListeningPage() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Mentions Feed</CardTitle>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-gray-600 dark:text-slate-400 mt-1">
                 {filteredMentions.length.toLocaleString()} mentions found
               </p>
             </div>
@@ -359,16 +359,16 @@ export function SocialListeningPage() {
           {viewMode === "card" ? (
             filteredMentions.length === 0 ? (
               <div className="text-center py-16">
-                <Search className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-700 mb-1">No mentions found</h3>
-                <p className="text-sm text-gray-500">Try adjusting your search or filters</p>
+                <Search className="w-12 h-12 text-gray-300 dark:text-slate-600 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-700 dark:text-slate-300 mb-1">No mentions found</h3>
+                <p className="text-sm text-gray-500 dark:text-slate-500">Try adjusting your search or filters</p>
               </div>
             ) : (
             <div className="space-y-4">
               {filteredMentions.map((mention) => (
                 <div
                   key={mention.id}
-                  className="p-4 border border-gray-200 rounded-lg hover:border-primary transition-colors cursor-pointer"
+                  className="p-4 border border-gray-200 dark:border-slate-700 rounded-lg hover:border-primary dark:hover:border-primary hover:shadow-sm transition-all cursor-pointer"
                   onClick={() => setSelectedMention(mention)}
                 >
                   <div className="flex items-start gap-4">
@@ -378,29 +378,29 @@ export function SocialListeningPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2 flex-wrap">
                         <PlatformTag platform={mention.platform} />
-                        <span className="font-medium text-sm">{mention.author}</span>
-                        <span className="text-xs text-gray-500">{mention.time}</span>
-                        <span className="text-xs text-gray-500 flex items-center gap-1">
+                        <span className="font-medium text-sm dark:text-white">{mention.author}</span>
+                        <span className="text-xs text-gray-500 dark:text-slate-400">{mention.time}</span>
+                        <span className="text-xs text-gray-500 dark:text-slate-400 flex items-center gap-1">
                           <Globe className="w-3 h-3" />
                           {mention.location}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-700 mb-3">{mention.text}</p>
+                      <p className="text-sm text-gray-700 dark:text-slate-300 mb-3">{mention.text}</p>
                       <div className="flex items-center gap-4 flex-wrap">
                         <SentimentBadge sentiment={mention.sentiment}>
                           {mention.sentiment}
                         </SentimentBadge>
                         <EmotionTag emotion={mention.emotion} />
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-gray-500 dark:text-slate-400">
                           ❤️ {mention.engagement.likes}
                         </span>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-gray-500 dark:text-slate-400">
                           💬 {mention.engagement.comments}
                         </span>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-gray-500 dark:text-slate-400">
                           🔄 {mention.engagement.shares}
                         </span>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-gray-500 dark:text-slate-400">
                           👁️ {mention.reach} reach
                         </span>
                       </div>
@@ -420,35 +420,35 @@ export function SocialListeningPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="border-b">
+                <thead className="border-b dark:border-slate-700">
                   <tr className="text-left">
-                    <th className="pb-3 font-medium text-sm text-gray-600">Platform</th>
-                    <th className="pb-3 font-medium text-sm text-gray-600">Author</th>
-                    <th className="pb-3 font-medium text-sm text-gray-600">Content</th>
-                    <th className="pb-3 font-medium text-sm text-gray-600">Sentiment</th>
-                    <th className="pb-3 font-medium text-sm text-gray-600">Engagement</th>
-                    <th className="pb-3 font-medium text-sm text-gray-600">Time</th>
+                    <th className="pb-3 font-medium text-sm text-gray-600 dark:text-slate-400">Platform</th>
+                    <th className="pb-3 font-medium text-sm text-gray-600 dark:text-slate-400">Author</th>
+                    <th className="pb-3 font-medium text-sm text-gray-600 dark:text-slate-400">Content</th>
+                    <th className="pb-3 font-medium text-sm text-gray-600 dark:text-slate-400">Sentiment</th>
+                    <th className="pb-3 font-medium text-sm text-gray-600 dark:text-slate-400">Engagement</th>
+                    <th className="pb-3 font-medium text-sm text-gray-600 dark:text-slate-400">Time</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredMentions.map((mention) => (
                     <tr
                       key={mention.id}
-                      className="border-b hover:bg-gray-50 cursor-pointer"
+                      className="border-b dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer"
                       onClick={() => setSelectedMention(mention)}
                     >
                       <td className="py-3">
                         <PlatformTag platform={mention.platform} />
                       </td>
-                      <td className="py-3 text-sm">{mention.author}</td>
-                      <td className="py-3 text-sm max-w-md truncate">{mention.text}</td>
+                      <td className="py-3 text-sm dark:text-white">{mention.author}</td>
+                      <td className="py-3 text-sm max-w-md truncate dark:text-slate-300">{mention.text}</td>
                       <td className="py-3">
                         <SentimentBadge sentiment={mention.sentiment} size="sm">
                           {mention.sentiment}
                         </SentimentBadge>
                       </td>
-                      <td className="py-3 text-sm">{mention.engagement.likes}</td>
-                      <td className="py-3 text-sm text-gray-500">{mention.time}</td>
+                      <td className="py-3 text-sm dark:text-slate-300">{mention.engagement.likes}</td>
+                      <td className="py-3 text-sm text-gray-500 dark:text-slate-500">{mention.time}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -474,7 +474,7 @@ export function SocialListeningPage() {
                   </div>
                   <div>
                     <div className="font-medium">{selectedMention.author}</div>
-                    <div className="text-sm text-gray-500 flex items-center gap-2">
+                    <div className="text-sm text-gray-500 dark:text-slate-400 flex items-center gap-2">
                       <PlatformTag platform={selectedMention.platform} size="sm" />
                       <span>{selectedMention.time}</span>
                     </div>
@@ -483,19 +483,19 @@ export function SocialListeningPage() {
 
                 {/* Full Text */}
                 <div>
-                  <h4 className="font-medium mb-2">Full Text</h4>
-                  <p className="text-gray-700">{selectedMention.text}</p>
+                  <h4 className="font-medium mb-2 dark:text-white">Full Text</h4>
+                  <p className="text-gray-700 dark:text-slate-300">{selectedMention.text}</p>
                 </div>
 
                 {/* AI Summary */}
-                <div className="p-4 bg-primary-50 rounded-lg">
-                  <h4 className="font-medium mb-2 flex items-center gap-2">
+                <div className="p-4 bg-primary-50 dark:bg-primary/10 rounded-lg border border-primary/20">
+                  <h4 className="font-medium mb-2 dark:text-white flex items-center gap-2">
                     <span className="w-6 h-6 bg-primary rounded flex items-center justify-center">
                       <span className="text-white text-xs">AI</span>
                     </span>
                     AI Summary
                   </h4>
-                  <p className="text-sm text-gray-700">
+                  <p className="text-sm text-gray-700 dark:text-slate-300">
                     Positive mention highlighting new AI features and competitive intelligence capabilities.
                     High engagement rate indicates strong audience interest. No action required.
                   </p>
@@ -503,51 +503,51 @@ export function SocialListeningPage() {
 
                 {/* Sentiment Analysis */}
                 <div>
-                  <h4 className="font-medium mb-3">Sentiment Analysis</h4>
+                  <h4 className="font-medium mb-3 dark:text-white">Sentiment Analysis</h4>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm">Overall Sentiment</span>
+                      <span className="text-sm dark:text-slate-300">Overall Sentiment</span>
                       <SentimentBadge sentiment={selectedMention.sentiment}>
                         {selectedMention.sentiment}
                       </SentimentBadge>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm">Emotion</span>
+                      <span className="text-sm dark:text-slate-300">Emotion</span>
                       <EmotionTag emotion={selectedMention.emotion} />
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm">Confidence Score</span>
-                      <span className="text-sm font-medium">94%</span>
+                      <span className="text-sm dark:text-slate-300">Confidence Score</span>
+                      <span className="text-sm font-medium dark:text-white">94%</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Engagement Stats */}
                 <div>
-                  <h4 className="font-medium mb-3">Engagement Statistics</h4>
+                  <h4 className="font-medium mb-3 dark:text-white">Engagement Statistics</h4>
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="p-3 bg-gray-50 rounded-lg">
-                      <div className="text-sm text-gray-600 mb-1">Likes</div>
-                      <div className="text-xl">{selectedMention.engagement.likes}</div>
+                    <div className="p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
+                      <div className="text-sm text-gray-600 dark:text-slate-400 mb-1">Likes</div>
+                      <div className="text-xl dark:text-white">{selectedMention.engagement.likes}</div>
                     </div>
-                    <div className="p-3 bg-gray-50 rounded-lg">
-                      <div className="text-sm text-gray-600 mb-1">Comments</div>
-                      <div className="text-xl">{selectedMention.engagement.comments}</div>
+                    <div className="p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
+                      <div className="text-sm text-gray-600 dark:text-slate-400 mb-1">Comments</div>
+                      <div className="text-xl dark:text-white">{selectedMention.engagement.comments}</div>
                     </div>
-                    <div className="p-3 bg-gray-50 rounded-lg">
-                      <div className="text-sm text-gray-600 mb-1">Shares</div>
-                      <div className="text-xl">{selectedMention.engagement.shares}</div>
+                    <div className="p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
+                      <div className="text-sm text-gray-600 dark:text-slate-400 mb-1">Shares</div>
+                      <div className="text-xl dark:text-white">{selectedMention.engagement.shares}</div>
                     </div>
-                    <div className="p-3 bg-gray-50 rounded-lg">
-                      <div className="text-sm text-gray-600 mb-1">Reach</div>
-                      <div className="text-xl">{selectedMention.reach}</div>
+                    <div className="p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
+                      <div className="text-sm text-gray-600 dark:text-slate-400 mb-1">Reach</div>
+                      <div className="text-xl dark:text-white">{selectedMention.reach}</div>
                     </div>
                   </div>
                 </div>
 
                 {/* Tags */}
                 <div>
-                  <h4 className="font-medium mb-2">Tags</h4>
+                  <h4 className="font-medium mb-2 dark:text-white">Tags</h4>
                   <div className="flex flex-wrap gap-2">
                     {selectedMention.tags.map((tag, i) => (
                       <Badge key={i} variant="secondary">
@@ -622,17 +622,17 @@ export function SocialListeningPage() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
-            <p className="text-sm text-gray-500">Select which columns to include in your CSV export.</p>
+            <p className="text-sm text-gray-500 dark:text-slate-400">Select which columns to include in your CSV export.</p>
             <div className="space-y-2">
               {allColumns.map((col) => (
-                <label key={col} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+                <label key={col} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={selectedColumns.includes(col)}
                     onChange={() => toggleColumn(col)}
                     className="w-4 h-4 rounded border-gray-300 text-primary"
                   />
-                  <span className="text-sm font-medium">{col}</span>
+                  <span className="text-sm font-medium dark:text-slate-200">{col}</span>
                 </label>
               ))}
             </div>
@@ -640,8 +640,8 @@ export function SocialListeningPage() {
               <button onClick={() => setSelectedColumns(allColumns)} className="text-xs text-primary hover:underline">
                 Select All
               </button>
-              <span className="text-gray-300">·</span>
-              <button onClick={() => setSelectedColumns([])} className="text-xs text-gray-500 hover:underline">
+              <span className="text-gray-300 dark:text-slate-600">·</span>
+              <button onClick={() => setSelectedColumns([])} className="text-xs text-gray-500 dark:text-slate-400 hover:underline">
                 Clear All
               </button>
             </div>
