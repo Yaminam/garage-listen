@@ -107,6 +107,3 @@ export function ResetPasswordPage() {
     </Card>
   );
 }
-    </Card>
-  );
-}
