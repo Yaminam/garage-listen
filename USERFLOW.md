@@ -1,116 +1,115 @@
 ﻿# Garage Listen — User Flow
 
-Complete user journey: entry point through onboarding to daily dashboard usage.
-Covers every screen, all input parameters, validation rules, and routing guardrails.
+> Complete journey from first visit through daily dashboard use.
+> Every screen, input parameter, validation rule, routing guardrail, and component behaviour documented.
 
 ---
 
-## Flow Overview
+## Quick Reference — Route Map
 
 ```
-GET /
-  └─► /auth/login          (unauthenticated)
-        ├─► /auth/signup
-        │     └─► /onboarding        (new user — always)
-        │           └─► /dashboard   (completeOnboarding() called)
-        └─► /onboarding or /dashboard (returning user — depends on flag)
-
-/auth/forgot-password
-  └─► /auth/reset-password
-        └─► /auth/login
-
-/dashboard/*               (requires isAuthenticated + onboardingCompleted)
-/onboarding                (requires isAuthenticated)
+/  ──────────────────────────────────────── → /auth/login (redirect)
+│
+├── /auth/login          ──[success]──────► /onboarding  (new user)
+│                                        ► /dashboard    (returning user)
+├── /auth/signup         ──[success]──────► /onboarding  (always)
+├── /auth/forgot-password ─[submit]───────► success state (mock)
+├── /auth/reset-password ──[success]──────► /auth/login
+└── /auth/verify-email
+│
+├── /onboarding          ──[step 9 done]──► /dashboard
+│     (ProtectedRoute: auth required)
+│
+└── /dashboard/*
+      (ProtectedRoute: auth + onboarding required)
+      ├── /dashboard
+      ├── /dashboard/listening
+      ├── /dashboard/inbox
+      ├── /dashboard/sentiment
+      ├── /dashboard/competitors
+      ├── /dashboard/trends
+      ├── /dashboard/alerts
+      ├── /dashboard/reports
+      ├── /dashboard/settings
+      └── /dashboard/ask-ai
 ```
 
 ---
 
-## 1. Entry — Root Redirect
+## 1. Root Entry
 
-**Route:** `/`
-**Component:** React Router `<Navigate to="/auth/login" replace />`
-
-- No UI rendered
-- Immediately redirects to `/auth/login`
-- No parameters, no state
+**Route:** `/`  
+**Behaviour:** `<Navigate to="/auth/login" replace />`  
+No component renders. Immediate redirect. No state, no parameters.
 
 ---
 
 ## 2. Login
 
-**Route:** `/auth/login`
-**Component:** `LoginPage.tsx`
-**Layout:** `AuthLayout`
+**Route:** `/auth/login` · **Layout:** `AuthLayout` · **File:** `LoginPage.tsx`
 
-### Functionality
-- Email + password credentials form
-- Google OAuth button (mock flow — calls `login()` directly)
-- "Forgot password" link → `/auth/forgot-password`
-- "Create an account" link → `/auth/signup`
-- Enter key triggers submit
+### Fields & Parameters
 
-### Parameters
-
-| Field | Type | Required | Constraints |
+| Field | Type | Required | Rule |
 |---|---|---|---|
-| `email` | string | Yes | RFC email format, non-empty |
-| `password` | string | Yes | Min 8 characters |
+| `email` | string | ✅ | RFC format — `/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/` |
+| `password` | string | ✅ | Minimum 8 characters |
 
-### Validation (src/app/lib/validation.ts)
+### Validation behaviour
 
-| Field | Rule | Error shown |
-|---|---|---|
-| email | `validateEmail()` — regex `/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/` | "Enter a valid email address" |
-| password | `validateMinLength(password, 8)` | "Password must be at least 8 characters" |
+- Runs on submit only (not on blur)
+- Each field's error clears individually when the user starts typing in that field
+- `AlertCircle` icon + red text shown inline below the invalid field
+- Form-level `errors.form` slot available for auth-failure banners
 
-- Errors cleared per-field on change (not on global re-submit)
-- `AlertCircle` icon shown inline beneath each invalid field
-- Validation runs on submit only (not on blur)
+### Loading state
 
-### Loading State
-- `loading = true` for 800 ms simulated async delay
-- Submit button shows `Loader2` spinner, disabled during load
+| Duration | Button state |
+|---|---|
+| 800 ms simulated delay | `Loader2` spinner shown, button disabled |
 
-### Post-Submit Routing Guardrail
+### Submit flow
+
 ```
-login(email, password)
-  └─► onboardingCompleted === true  → navigate("/dashboard")
-  └─► onboardingCompleted === false → navigate("/onboarding")
+validate() passes?
+  NO  → set per-field errors, stop
+  YES → setLoading(true) → 800ms → login(email, password)
+          └─► onboardingCompleted === true  → /dashboard
+          └─► onboardingCompleted === false → /onboarding
 ```
 
-### AuthContext Side-Effects
-- `login()` sets `isAuthenticated = true` in state + `localStorage.isAuthenticated`
-- If no stored `authUser`, creates placeholder: `{ email, firstName: "User", lastName: "", company: "" }`
+### Additional interactions
+
+- **Enter key** on any field → triggers submit
+- **Google button** → calls `login()` directly (mock), same redirect logic
+- **"Forgot password"** link → `/auth/forgot-password`
+- **"Create an account"** link → `/auth/signup`
+
+### AuthContext side-effect
+
+`login()` sets `isAuthenticated = true` in state and `localStorage`.  
+If no `authUser` stored, creates placeholder: `{ email, firstName: "User", lastName: "", company: "" }`.
 
 ---
 
 ## 3. Sign Up
 
-**Route:** `/auth/signup`
-**Component:** `SignupPage.tsx`
-**Layout:** `AuthLayout`
+**Route:** `/auth/signup` · **Layout:** `AuthLayout` · **File:** `SignupPage.tsx`
 
-### Functionality
-- Full registration form — creates `AuthUser` object
-- 4-bar live password strength meter
-- Terms acceptance checkbox
-- Google OAuth button (mock)
-- Redirects to `/onboarding` on success (always — new users always onboard)
+### Fields & Parameters
 
-### Parameters
-
-| Field | Type | Required | Constraints |
+| Field | Type | Required | Rule |
 |---|---|---|---|
-| `firstName` | string | Yes | Non-empty |
-| `lastName` | string | Yes | Non-empty |
-| `company` | string | Yes | Non-empty |
-| `email` | string | Yes | RFC email format |
-| `password` | string | Yes | Min 8 characters |
-| `agreeTerms` | boolean | Yes | Must be `true` |
+| `firstName` | string | ✅ | Non-empty (trimmed) |
+| `lastName` | string | ✅ | Non-empty (trimmed) |
+| `company` | string | ✅ | Non-empty (trimmed) |
+| `email` | string | ✅ | RFC email format |
+| `password` | string | ✅ | Min 8 characters |
+| `agreeTerms` | boolean | ✅ | Must be `true` |
 
-### Validation
+### Validation behaviour
 
-| Field | Rule | Error |
+| Field | Function | Error message |
 |---|---|---|
 | firstName | `validateRequired()` | "First name is required" |
 | lastName | `validateRequired()` | "Last name is required" |
@@ -119,194 +118,198 @@ login(email, password)
 | password | `validateMinLength(8)` | "Password must be at least 8 characters" |
 | agreeTerms | `=== false` | "You must accept the terms to continue" |
 
-- All fields validated on submit
-- Per-field errors cleared individually on change
-- `AlertCircle` icon shown next to each error
+### Password strength meter
 
-### Password Strength Meter (getPasswordStrength)
+Live 4-bar indicator powered by `getPasswordStrength()`. Scores based on:
 
-| Score | Label | Bar color | Trigger condition |
-|---|---|---|---|
-| 0 | — | gray | empty |
-| 1 | Weak | red-400 | length < 8 or only one criterion |
-| 2 | Fair | orange-400 | length >= 8, one additional criterion |
-| 3 | Good | yellow-400 | length >= 8, two additional criteria |
-| 4 | Strong | emerald-500 | length >= 12 + uppercase + lowercase + number + special char |
+| Criterion | Points |
+|---|---|
+| Length ≥ 8 | +1 |
+| Length ≥ 12 | +1 |
+| Mixed case (`/[A-Z]/` + `/[a-z]/`) | +1 |
+| Contains digit | +1 |
+| Contains special character | +1 |
 
-Strength criteria checked:
-1. `length >= 8`
-2. `length >= 12`
-3. Mixed case (`/[A-Z]/` AND `/[a-z]/`)
-4. Contains digit (`/[0-9]/`)
-5. Contains special char (`/[^A-Za-z0-9]/`)
+| Score | Label | Bar colour |
+|---|---|---|
+| 0 | — | gray-200 |
+| 1 | Weak | red-400 |
+| 2 | Fair | orange-400 |
+| 3 | Good | yellow-400 |
+| 4 | Strong | emerald-500 |
 
-### Loading State
-- 900 ms simulated delay
-- `Loader2` spinner on button, disabled during load
+### Submit flow
 
-### Post-Submit Side-Effects
 ```
-register({ email, firstName, lastName, company }, password)
-  → isAuthenticated = true                    (state + localStorage)
-  → authUser = { email, firstName, ... }      (state + localStorage as JSON)
-  → navigate("/onboarding")
+validate() passes?
+  NO  → set per-field errors, stop
+  YES → setLoading(true) → 900ms
+          → register({ email, firstName, lastName, company }, password)
+          → navigate("/onboarding")
 ```
+
+`register()` stores `AuthUser` in state and `localStorage.authUser` as JSON, sets `isAuthenticated = true`.
 
 ---
 
 ## 4. Forgot Password
 
-**Route:** `/auth/forgot-password`
-**Component:** `ForgotPasswordPage.tsx`
-**Layout:** `AuthLayout`
+**Route:** `/auth/forgot-password` · **Layout:** `AuthLayout` · **File:** `ForgotPasswordPage.tsx`
 
-### Functionality
-- Single email field
-- On success: shows confirmation state with `MailCheck` icon + submitted email
-- "Try again" link resets to form state
-- Back to login link
+### Fields
 
-### Parameters
-
-| Field | Type | Required | Constraints |
+| Field | Type | Required | Rule |
 |---|---|---|---|
-| `email` | string | Yes | RFC email format |
+| `email` | string | ✅ | RFC email format |
 
-### Validation
-- `validateEmail()` — same rule as login
-- Error shown inline with `AlertCircle`
+### UI states
 
-### States
-| State | UI |
-|---|---|
-| Initial | Email form with submit button |
-| Loading | Spinner, button disabled |
-| Success | MailCheck icon, "Check your inbox" message, shows submitted email, "try again" link |
+| State | Trigger | UI shown |
+|---|---|---|
+| Initial | on load | Email input + "Send reset link" button |
+| Loading | on submit | `Loader2` spinner, button disabled |
+| Success | after delay | `MailCheck` icon, "Check your inbox", shows submitted email, "try again" link |
 
-### Guardrail
-- No backend call — mock flow only
-- Success state is purely cosmetic (not gated on actual email delivery)
+### Guardrails
+- Empty / malformed email blocked before submit
+- Success state is cosmetic — no real email sent (mock flow)
+- "Try again" link resets to initial state
 
 ---
 
 ## 5. Reset Password
 
-**Route:** `/auth/reset-password`
-**Component:** `ResetPasswordPage.tsx`
-**Layout:** `AuthLayout`
+**Route:** `/auth/reset-password` · **Layout:** `AuthLayout` · **File:** `ResetPasswordPage.tsx`
 
-### Functionality
-- New password + confirm password fields
-- Live strength meter on new password
-- Real-time match indicator on confirm field
-- On success: `toast.success` → redirect to `/auth/login`
+### Fields
 
-### Parameters
-
-| Field | Type | Required | Constraints |
+| Field | Type | Required | Rule |
 |---|---|---|---|
-| `newPassword` | string | Yes | Min 8 characters |
-| `confirmPassword` | string | Yes | Must match `newPassword` exactly |
+| `newPassword` | string | ✅ | Min 8 characters |
+| `confirmPassword` | string | ✅ | Must exactly equal `newPassword` |
 
 ### Validation
 
-| Field | Rule | Error |
+| Field | Function | Error |
 |---|---|---|
 | newPassword | `validateMinLength(8)` | "Password must be at least 8 characters" |
 | confirmPassword | `validatePasswordMatch()` | "Passwords do not match" / "Please confirm your password" |
 
-- Confirm field shows emerald `CheckCircle2` + "Passwords match" when both fields are equal and non-empty
-- Submit blocked if either field fails
+- Confirm field shows emerald `CheckCircle2` + "Passwords match" in real time when both fields match and are non-empty
+- Live 4-bar strength meter on `newPassword` (same scoring as signup)
 
-### Post-Submit
-- 800 ms simulated delay
-- `toast.success("Password reset successfully!")`
-- `navigate("/auth/login")`
+### Submit flow
+
+```
+validate() passes?
+  NO  → show errors, stop
+  YES → setLoading(true) → 800ms
+          → toast.success("Password reset successfully!")
+          → navigate("/auth/login")
+```
 
 ---
 
 ## 6. Route Guard — ProtectedRoute
 
-**Component:** `ProtectedRoute.tsx`
-Wraps all `/onboarding` and `/dashboard/*` routes.
+**File:** `ProtectedRoute.tsx`  
+Applied to all `/onboarding` and `/dashboard/*` routes.
 
-### Decision Tree
+### Decision tree
 
 ```
-Request hits ProtectedRoute
+ProtectedRoute renders
   │
   ├─ isAuthenticated === false
   │     └─► <Navigate to="/auth/login" replace />
   │
-  ├─ isAuthenticated === true
-  │     ├─ onboardingCompleted === true  AND pathname starts with "/onboarding"
-  │     │     └─► <Navigate to="/dashboard" replace />
-  │     │
-  │     ├─ onboardingCompleted === false AND pathname starts with "/dashboard"
-  │     │     └─► <Navigate to="/onboarding" replace />
-  │     │
-  │     └─ All other cases
-  │           └─► render children
+  └─ isAuthenticated === true
+        ├─ onboardingCompleted=true  + pathname starts "/onboarding"
+        │     └─► <Navigate to="/dashboard" replace />
+        │
+        ├─ onboardingCompleted=false + pathname starts "/dashboard"
+        │     └─► <Navigate to="/onboarding" replace />
+        │
+        └─ all other cases
+              └─► render children ✅
 ```
 
-### Guardrail Matrix
+### Guardrail matrix
 
-| isAuthenticated | onboardingCompleted | Visiting | Result |
+| isAuthenticated | onboardingCompleted | Destination | Result |
 |---|---|---|---|
-| false | any | any protected route | → /auth/login |
-| true | true | /onboarding | → /dashboard |
-| true | false | /dashboard/* | → /onboarding |
-| true | true | /dashboard/* | ✅ renders |
-| true | false | /onboarding | ✅ renders |
+| `false` | any | any protected | → `/auth/login` |
+| `true` | `true` | `/onboarding` | → `/dashboard` |
+| `true` | `false` | `/dashboard/*` | → `/onboarding` |
+| `true` | `true` | `/dashboard/*` | ✅ renders |
+| `true` | `false` | `/onboarding` | ✅ renders |
 
-### State Sources
-- Both flags read from `localStorage` on hydration (survives hard refresh)
-- `isAuthenticated` key: `localStorage.isAuthenticated`
-- `onboardingCompleted` key: `localStorage.onboardingCompleted`
+Both flags hydrated from `localStorage` on app load — survive hard refresh.
 
 ---
 
 ## 7. Onboarding Wizard
 
-**Route:** `/onboarding`
-**Component:** `OnboardingPage.tsx`
-**Guard:** `ProtectedRoute` (must be authenticated)
+**Route:** `/onboarding` · **File:** `OnboardingPage.tsx`  
+**Guard:** ProtectedRoute (auth required, will redirect away if onboarding already done)
 
-### Layout
-- Full-screen two-column layout
-- **Left sidebar** (hidden on mobile `lg:flex`): Logo, icon step list, progress bar + %
-- **Right main**: mobile top bar + step header (icon badge + title + description) + white card with step content + navigation buttons
+### Layout structure
 
-### Step Navigation Guardrail
+```
+<div min-h-screen flex>
+  <aside w-72 lg:flex hidden>          ← sidebar: logo + step list + progress bar
+  <main flex-1>
+    [mobile] top bar: logo + Step X/9 pill + thin progress bar
+    step header: icon badge + h1 title + description
+    <div white card>
+      step content (inputs, pickers, toggles)
+      [error banner — only visible when tried=true and canProceed()=false]
+    </div>
+    navigation buttons: Back | Go to Dashboard Now | Continue →
+  </main>
+</div>
+```
+
+### Sidebar step states
+
+| State | Visual |
+|---|---|
+| Completed (`currentStep > n`) | Emerald `CheckCircle` icon, full opacity |
+| Current (`currentStep === n`) | Violet highlighted row + dot indicator + icon |
+| Future (`currentStep < n`) | Icon + label at 40% opacity |
+
+### Navigation guardrail
+
 ```
 handleNext()
-  └─► canProceed() === false
-        └─► setTried(true) → stepError() returns error message → shown in red banner
-  └─► canProceed() === true
-        └─► setTried(false) → advance to next step
-              └─► currentStep === 8 (last)
-                    └─► completeOnboarding() → navigate("/dashboard")
+  ├─ canProceed() === false
+  │     └─► setTried(true)
+  │           stepError() → non-null → red error banner shown
+  │
+  └─ canProceed() === true
+        └─► setTried(false) → currentStep++
+              └─► currentStep was 8 (last)
+                    → completeOnboarding()
+                    → navigate("/dashboard")
 ```
 
-- "Back" button always allowed (no blocking)
-- "Go to Dashboard Now" available from step 1 onward — calls `completeOnboarding()` directly (skips remaining steps)
-- Error banner hidden until `tried === true` (first submit attempt)
+- **Back** button: always allowed, no validation
+- **"Go to Dashboard Now"**: visible from step 1 onward, calls `completeOnboarding()` immediately and navigates, skipping remaining steps
+- Error banner hidden until `tried === true` (first advance attempt per step)
 
 ---
 
 ### Step 1 — Account Info (`currentStep = 0`)
 
-**Purpose:** Populate user identity baseline for the session.
-
 | Field | Type | Required | Constraint |
 |---|---|---|---|
-| `fullName` | string | Yes | Non-empty (trimmed) |
-| `email` | string | Yes | RFC email format via `validateEmail()` |
-| `company` | string | Yes | Non-empty (trimmed) |
+| `fullName` | string | ✅ | Non-empty, trimmed |
+| `email` | string | ✅ | RFC format via `validateEmail()` |
+| `company` | string | ✅ | Non-empty, trimmed |
 
-**canProceed:** `fullName.trim() && email.trim() && company.trim() && validateEmail(email) === null`
+`canProceed`: `fullName ∧ email ∧ company non-empty ∧ validateEmail(email) === null`
 
-**Errors (shown only after first Next attempt):**
+**Error messages** (after first Next attempt):
 - "Full name is required"
 - "Email is required"
 - `validateEmail(email)` result (format error)
@@ -316,258 +319,321 @@ handleNext()
 
 ### Step 2 — Brand Setup (`currentStep = 1`)
 
-**Purpose:** Define the primary brand being monitored.
-
 | Field | Type | Required | Constraint |
 |---|---|---|---|
-| `brandName` | string | Yes | Non-empty (trimmed) |
-| `brandDescription` | string | No | Free text, no limit enforced |
+| `brandName` | string | ✅ | Non-empty, trimmed |
+| `brandDescription` | string | ❌ | Free text, no length limit |
 
-**canProceed:** `brandName.trim() !== ""`
-
+`canProceed`: `brandName.trim() !== ""`  
 **Error:** "Brand name is required"
 
 ---
 
 ### Step 3 — Keywords (`currentStep = 2`)
 
-**Purpose:** Seed the keyword monitoring list.
-
-| Field | Type | Required | Constraint |
+| Field | Type | Required | Default |
 |---|---|---|---|
-| `keywords` | string[] | No | Defaults to `["brand name"]` |
-| `keywordOperator` | "AND" \| "OR" \| "NOT" | No | Defaults to `"OR"` |
+| `keywords` | `string[]` | ❌ | `["brand name"]` |
+| `keywordOperator` | `"AND" \| "OR" \| "NOT"` | ❌ | `"OR"` |
 
-**Interactions:**
-- Add via input + Enter or `+` button
-- Duplicate keywords silently ignored (`!keywords.includes(trimmed)`)
-- Remove via `X` badge button
-- Operator toggle: AND / OR / NOT
+| Interaction | Behaviour |
+|---|---|
+| Type + Enter or `+` button | Adds keyword |
+| Duplicate entry | Silently ignored |
+| `X` on badge | Removes keyword |
+| AND / OR / NOT toggle | Updates `keywordOperator` |
 
-**canProceed:** always `true` (optional step)
+`canProceed`: always `true` (optional step)
 
 ---
 
 ### Step 4 — Competitors (`currentStep = 3`)
 
-**Purpose:** Build competitor watchlist.
+| Field | Type | Required |
+|---|---|---|
+| `competitors` | `string[]` | ❌ |
 
-| Field | Type | Required | Constraint |
-|---|---|---|---|
-| `competitors` | string[] | No | Duplicate entries silently ignored |
+- Add: input + Enter / `+` button
+- Duplicate entries silently ignored
+- Remove: `X` per entry
 
-**Interactions:**
-- Add via input + Enter or `+` button
-- Remove via `X`
-
-**canProceed:** always `true` (optional step)
+`canProceed`: always `true` (optional step)
 
 ---
 
 ### Step 5 — Platforms (`currentStep = 4`)
 
-**Purpose:** Select which social platforms to monitor.
-
 | Field | Type | Required | Constraint |
 |---|---|---|---|
-| `selectedPlatforms` | string[] | Yes | At least 1 selection required |
+| `selectedPlatforms` | `string[]` | ✅ | At least 1 |
 
-**Available platforms (9):**
+**Available (9 platforms):**
 
-| ID | Name |
+| ID | Display |
 |---|---|
-| twitter | Twitter / 𝕏 |
-| instagram | Instagram |
-| youtube | YouTube |
-| news | News |
-| blogs | Blogs |
-| reddit | Reddit |
-| linkedin | LinkedIn |
-| facebook | Facebook |
-| forums | Forums |
+| `twitter` | Twitter / 𝕏 |
+| `instagram` | Instagram |
+| `youtube` | YouTube |
+| `news` | News |
+| `blogs` | Blogs |
+| `reddit` | Reddit |
+| `linkedin` | LinkedIn |
+| `facebook` | Facebook |
+| `forums` | Forums |
 
-**canProceed:** `selectedPlatforms.length > 0`
-
+`canProceed`: `selectedPlatforms.length > 0`  
 **Error:** "Select at least one platform"
 
 ---
 
 ### Step 6 — Region & Language (`currentStep = 5`)
 
-**Purpose:** Target audience scope for monitoring.
-
 | Field | Type | Required | Default |
 |---|---|---|---|
-| `region` | string | No | `"global"` |
-| `language` | string | No | `"english"` |
+| `region` | string | ❌ | `"global"` |
+| `language` | string | ❌ | `"english"` |
 
-**canProceed:** always `true`
+`canProceed`: always `true`
 
 ---
 
 ### Step 7 — Goals (`currentStep = 6`)
 
-**Purpose:** Declare primary monitoring intent (drives dashboard defaults).
-
 | Field | Type | Required | Constraint |
 |---|---|---|---|
-| `selectedGoals` | string[] | Yes | At least 1 required |
+| `selectedGoals` | `string[]` | ✅ | At least 1 |
 
-**Available goals (6):**
+**Available (6 goals):**
 
 | ID | Label |
 |---|---|
-| brand-monitoring | Brand Monitoring |
-| competitor-analysis | Competitor Analysis |
-| customer-insights | Customer Insights |
-| trend-discovery | Trend Discovery |
-| crisis-management | Crisis Management |
-| market-research | Market Research |
+| `brand-monitoring` | Brand Monitoring |
+| `competitor-analysis` | Competitor Analysis |
+| `customer-insights` | Customer Insights |
+| `trend-discovery` | Trend Discovery |
+| `crisis-management` | Crisis Management |
+| `market-research` | Market Research |
 
-**canProceed:** `selectedGoals.length > 0`
-
+`canProceed`: `selectedGoals.length > 0`  
 **Error:** "Select at least one goal"
 
 ---
 
 ### Step 8 — Connect Accounts (`currentStep = 7`)
 
-**Purpose:** OAuth account linking (optional, mock only).
+| Field | Type | Required |
+|---|---|---|
+| `connectedAccounts` | `string[]` | ❌ |
 
-| Field | Type | Required | Constraint |
-|---|---|---|---|
-| `connectedAccounts` | string[] | No | Toggle on/off per platform |
+- Toggle per platform — optional OAuth linking (mock)
 
-**canProceed:** always `true`
+`canProceed`: always `true`
 
 ---
 
 ### Step 9 — Done (`currentStep = 8`)
 
-**Purpose:** Completion confirmation and dashboard entry.
-
 - No input fields
-- "Complete Setup" button → `completeOnboarding()` + `navigate("/dashboard")`
+- "Complete Setup" → `completeOnboarding()` → `navigate("/dashboard")`
 - Sets `localStorage.onboardingCompleted = "true"`
 
 ---
 
-## 8. Dashboard
+## 8. Dashboard Layout
 
-**Route:** `/dashboard/*`
-**Layout:** `DashboardLayout`
-**Guard:** `ProtectedRoute` (isAuthenticated + onboardingCompleted)
+**Layout:** `DashboardLayout.tsx`  
+**Guard:** ProtectedRoute (both flags required)
 
-### Navigation (sidebar, 10 items)
+### Top header bar
 
-| Route | Page |
+| Element | Behaviour |
 |---|---|
-| /dashboard | Home overview |
-| /dashboard/listening | Social Listening |
-| /dashboard/inbox | Unified Inbox |
-| /dashboard/sentiment | Sentiment Analytics |
-| /dashboard/competitors | Competitor Monitoring |
-| /dashboard/trends | Trend Discovery |
-| /dashboard/alerts | Alerts & Crisis |
-| /dashboard/reports | Report Builder |
-| /dashboard/settings | Settings |
-| /dashboard/ask-ai | AI Insights Chat |
+| Search bar | "Search mentions, keywords, trends…" placeholder |
+| `ThemeToggle` | Switches light / dark, persisted via `ThemeContext` |
+| `Bell` icon | Opens `NotificationCenter` popover, unread badge count |
+| `HelpCircle` | Static (no action currently wired) |
+| Avatar button | `DropdownMenu` → Profile / Settings / Logout |
 
-### Global Dashboard Guardrails
+### Logout flow
 
-- Any direct URL access to `/dashboard/*` without auth → `/auth/login`
-- Any direct URL access to `/dashboard/*` without onboarding → `/onboarding`
-- `logout()` clears all three localStorage keys and resets both flags to `false`, forcing full re-auth
+```
+handleLogout()
+  → logout()        ← clears all 3 localStorage keys + resets state
+  → navigate("/auth/login")
+```
 
----
+### Sidebar navigation (10 items)
 
-## 9. AI Insights Chat
-
-**Route:** `/dashboard/ask-ai`
-**Component:** `AIChatPage.tsx`
-
-### Functionality
-- Freetext user input → keyword-matched AI response
-- Suggested question chips (hidden after first message sent)
-- Copy / ThumbsUp / ThumbsDown actions per AI response
-
-### Input Parameters
-
-| Field | Type | Constraint |
+| Label | Route | Icon |
 |---|---|---|
-| `message` | string | Non-empty, trimmed |
+| Dashboard | `/dashboard` | `Home` |
+| Social Listening | `/dashboard/listening` | `Ear` |
+| Unified Inbox | `/dashboard/inbox` | `Inbox` |
+| Sentiment Analytics | `/dashboard/sentiment` | `TrendingUp` |
+| Competitors | `/dashboard/competitors` | `Users` |
+| Trends | `/dashboard/trends` | `Sparkles` |
+| Alerts & Crisis | `/dashboard/alerts` | `Bell` |
+| Reports | `/dashboard/reports` | `FileText` |
+| Settings | `/dashboard/settings` | `Settings` |
+| Ask AI | `/dashboard/ask-ai` | `Bot` |
 
-### Guardrails
-- Empty / whitespace messages blocked (not sent)
-- Enter key sends; Shift+Enter inserts newline
-- Typing indicator shown for 1–2 s before response renders
-- Clear chat resets to initial suggested questions state
-
-### Keyword Topics Covered
-
-| Keyword match | Topic |
-|---|---|
-| sentiment | Sentiment analysis summary |
-| mention | Mention volume overview |
-| competitor | Competitor benchmarking |
-| trend | Trending topics |
-| alert / crisis | Alert status |
-| report | Report generation |
-| keyword / hashtag | Keyword performance |
-| influencer | Influencer identification |
-| platform | Platform breakdown |
-| (fallback) | Generic capability response |
+Active route highlighted with primary colour background pill.  
+Mobile: hamburger → slide-in drawer overlay.
 
 ---
 
-## 10. Session Persistence Model
+## 9. Dashboard Home
 
-All auth state is stored in `localStorage` and rehydrated on page load. No server session.
+**Route:** `/dashboard` · **File:** `DashboardHome.tsx`
 
-| Key | Value | Set by | Cleared by |
+### AI Morning Briefing card
+
+- Gradient banner (primary → primary-700) with `Sparkles` icon
+- Dismissible via `X` button (`briefingVisible` state — resets on navigation)
+- 3-column insight grid:
+
+| Column | Label | Sample content |
+|---|---|---|
+| 1 | 🔥 Top Story | "#ProductLaunch is trending — 145% above average mentions today." |
+| 2 | ⚠️ Watch Out | "Negative mentions about pricing rose 56% overnight." |
+| 3 | 💡 Opportunity | "Competitor A share of voice dropped 8%. Time to push content on Twitter & LinkedIn." |
+
+### KPI cards (4)
+
+| Metric | Sample value | Change | Trend |
+|---|---|---|---|
+| Total Mentions | 24,583 | +12.5% | ↑ |
+| Sentiment Score | 72% | +5.2% | ↑ |
+| Share of Voice | 38.4% | -2.1% | ↓ |
+| Active Alerts | 3 | +1 | ↑ |
+
+### Charts
+
+| Chart | Type | Data |
+|---|---|---|
+| Mentions Over Time | Recharts `LineChart` | 8-day rolling (Feb 20–27), mentions + sentiment score |
+| Sentiment Distribution | `PieChart` | Positive 64.4% / Neutral 28% / Negative 7.5% |
+| Platform Breakdown | `BarChart` | Twitter, Instagram, News, YouTube, Reddit |
+| Trending Topics | Static table | topic, mention count, sentiment badge, growth % |
+| Recent Mentions Feed | List | Author, platform tag, sentiment badge, engagement count, timestamp |
+| Word Cloud | Inline `div` grid | 20 keywords, size and colour weighted by volume/sentiment |
+
+---
+
+## 10. AI Insights Chat
+
+**Route:** `/dashboard/ask-ai` · **File:** `AIChatPage.tsx`
+
+### Input
+
+| Field | Constraint |
+|---|---|
+| `message` | Non-empty, trimmed — whitespace-only blocked |
+
+### Keyboard guardrails
+
+| Key | Action |
+|---|---|
+| `Enter` | Send message |
+| `Shift + Enter` | Insert newline |
+
+### Response engine
+
+Keyword-matched response map (checked with `.toLowerCase().includes()`):
+
+| Keyword | Topic returned |
+|---|---|
+| `sentiment` | Sentiment analysis overview |
+| `mention` | Mention volume summary |
+| `competitor` | Competitor benchmarking |
+| `trend` | Trending topics and hashtags |
+| `alert` / `crisis` | Alert status and severity |
+| `report` | Report generation guidance |
+| `keyword` / `hashtag` | Keyword performance data |
+| `influencer` | Influencer identification |
+| `platform` | Platform channel breakdown |
+| *(no match)* | Generic capability fallback |
+
+### Per-message actions (AI messages only)
+
+| Action | Behaviour |
+|---|---|
+| Copy | Copies message text to clipboard |
+| ThumbsUp | Toggles active state (visual only) |
+| ThumbsDown | Toggles active state (visual only) |
+
+### Flow guardrails
+
+- 3-dot typing indicator (`animate-bounce`) shown for 1–2 s before response renders
+- Suggested question chips shown only before first exchange, hidden after
+- "Clear chat" resets message history and restores suggestion chips
+- Auto-scroll to bottom on each new message
+
+---
+
+## 11. Global Guards & Persistence
+
+### localStorage keys
+
+| Key | Type | Set by | Cleared by |
 |---|---|---|---|
 | `isAuthenticated` | `"true"` | `login()`, `register()` | `logout()` |
-| `authUser` | JSON string of `AuthUser` | `login()`, `register()` | `logout()` |
+| `authUser` | JSON `AuthUser` | `login()`, `register()` | `logout()` |
 | `onboardingCompleted` | `"true"` | `completeOnboarding()` | `logout()` |
 
-### Hydration Order (AuthProvider init)
+All three keys read via lazy `useState` initialisers in `AuthProvider` — state hydrates on first render before any route guard can execute.
+
+### AuthUser shape
+
+```ts
+interface AuthUser {
+  email: string;
+  firstName: string;
+  lastName: string;
+  company: string;
+}
 ```
-useState(() => localStorage.getItem('isAuthenticated') === 'true')
-useState(() => localStorage.getItem('onboardingCompleted') === 'true')
-useState(() => JSON.parse(localStorage.getItem('authUser') || 'null'))
-```
 
-Hard refresh preserves session entirely. Logout is the only way to reset.
-
----
-
-## 11. Validation Library Reference
+### Validation library — function reference
 
 **File:** `src/app/lib/validation.ts`
 
-| Function | Signature | Returns |
-|---|---|---|
-| `validateEmail` | `(email: string)` | `string \| null` |
-| `validateRequired` | `(value: string, label: string)` | `string \| null` |
-| `validateMinLength` | `(value: string, min: number, label: string)` | `string \| null` |
-| `validatePasswordMatch` | `(password: string, confirm: string)` | `string \| null` |
-| `getPasswordStrength` | `(password: string)` | `PasswordStrength` |
-| `hasErrors` | `(errors: FieldErrors<T>)` | `boolean` |
-
-All functions return `null` on pass, an error string on fail.
+| Function | Signature | Pass → | Fail → |
+|---|---|---|---|
+| `validateEmail` | `(email: string)` | `null` | `"Enter a valid email address"` |
+| `validateRequired` | `(value, label)` | `null` | `"${label} is required"` |
+| `validateMinLength` | `(value, min, label)` | `null` | `"${label} must be at least ${min} characters"` |
+| `validatePasswordMatch` | `(password, confirm)` | `null` | `"Passwords do not match"` |
+| `getPasswordStrength` | `(password)` | `PasswordStrength` object | — |
+| `hasErrors` | `(errors: FieldErrors<T>)` | `false` | `true` |
 
 ---
 
-## 12. Complete State Machine Summary
+## 12. Auth State Machine
 
 ```
-UNAUTHENTICATED
-  │
-  ├─[signup]──► AUTHENTICATED (onboardingCompleted=false)
-  │                 └─[complete onboarding]──► AUTHENTICATED (onboardingCompleted=true)
-  │                                                └─[logout]──► UNAUTHENTICATED
-  │
-  └─[login (returning)]
-        ├─ onboardingCompleted=false ──► /onboarding
-        └─ onboardingCompleted=true  ──► /dashboard
+┌─────────────────────────────────────────────────────────────┐
+│                      UNAUTHENTICATED                         │
+│                   (isAuthenticated=false)                    │
+└────────────────┬────────────────────────────────────────────┘
+                 │  login() or register()
+                 ▼
+┌─────────────────────────────────────────────────────────────┐
+│     AUTHENTICATED — ONBOARDING PENDING                       │
+│   (isAuthenticated=true, onboardingCompleted=false)          │
+│                                                              │
+│   All /dashboard/* attempts → redirect /onboarding          │
+└────────────────┬────────────────────────────────────────────┘
+                 │  completeOnboarding()
+                 ▼
+┌─────────────────────────────────────────────────────────────┐
+│     AUTHENTICATED — ACTIVE                                   │
+│   (isAuthenticated=true, onboardingCompleted=true)           │
+│                                                              │
+│   Full dashboard access granted                              │
+│   /onboarding attempts → redirect /dashboard                 │
+└────────────────┬────────────────────────────────────────────┘
+                 │  logout()
+                 ▼
+         UNAUTHENTICATED  (all localStorage keys cleared)
 ```
